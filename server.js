@@ -85,6 +85,7 @@ app.post('/api/login', (req, res) => {
 app.post('/api/deposit', (req, res) => {
     const { phone, amount, utr } = req.body;
     if (!amount || !utr) return res.json({ success: false, message: 'Enter amount and UTR' });
+    if (Number(amount) < 100) return res.json({ success: false, message: 'Minimum deposit amount is ₹100' });
     db.deposits.unshift({ id: Date.now(), phone, amount: Number(amount), utr, status: 'Pending' });
     res.json({ success: true, message: 'Deposit request submitted successfully' });
 });
@@ -92,6 +93,7 @@ app.post('/api/deposit', (req, res) => {
 app.post('/api/withdraw', (req, res) => {
     const { phone, amount, accName, accNo, ifsc, bankName } = req.body;
     const user = db.users[phone];
+    if (Number(amount) < 100) return res.json({ success: false, message: 'Minimum withdrawal amount is ₹100' });
     if (!user || user.balance < amount) return res.json({ success: false, message: 'Insufficient balance' });
     if (!accName || !accNo || !ifsc || !bankName) return res.json({ success: false, message: 'Fill all bank details' });
     user.balance -= Number(amount);

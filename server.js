@@ -17,7 +17,6 @@ let withdrawals = [];
 let gameHistory = [];
 let currentPeriod = Number(new Date().toISOString().replace(/[-T:\.Z]/g, '').slice(0, 14));
 let timer = 30;
-let lastResult = { period: currentPeriod, number: 7, bigSmall: 'Big', color: 'green' };
 
 // Game Loop (Runs 24/7 on cloud)
 setInterval(() => {
@@ -31,7 +30,7 @@ setInterval(() => {
         if (randomNum === 0 || randomNum === 5) color = 'violet';
         else if (randomNum % 2 === 0) color = 'red';
 
-        lastResult = { period: currentPeriod - 1, number: randomNum, bigSmall, color };
+        const lastResult = { period: currentPeriod - 1, number: randomNum, bigSmall, color };
         gameHistory.unshift(lastResult);
         if (gameHistory.length > 50) gameHistory.pop();
 
@@ -87,7 +86,12 @@ app.get('/api/history', (req, res) => {
     res.json({ deposits: userDeposits, withdrawals: userWithdrawals, gameHistory });
 });
 
+// Always serve index.html for main route
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`24/7 Live Game Server running on port ${PORT}`);
+    console.log(`24/7 Live Game Server running strictly on port ${PORT}`);
 });

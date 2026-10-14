@@ -40,7 +40,22 @@ setInterval(() => {
 
                 if (win) {
                     b.status = 'Win';
-                    if (db.users[b.phone]) db.users[b.phone].balance += (b.totalAmount * 1.9);
+                    if (db.users[b.phone]) {
+                        let mult = 2.0; // Default for Big/Small/Colors (10 + 10 = 20 total return)
+                        let sel = b.select;
+                        if (sel === 0) mult = 10.0;
+                        else if (sel === 1) mult = 2.0;
+                        else if (sel === 2) mult = 3.0;
+                        else if (sel === 3) mult = 4.0;
+                        else if (sel === 4) mult = 5.0;
+                        else if (sel === 5) mult = 6.0;
+                        else if (sel === 6) mult = 7.0;
+                        else if (sel === 7) mult = 8.0;
+                        else if (sel === 8) mult = 9.0;
+                        else if (sel === 9) mult = 10.0;
+                        
+                        db.users[b.phone].balance += (b.totalAmount * mult);
+                    }
                 } else {
                     b.status = 'Loss';
                 }
@@ -107,7 +122,12 @@ app.post('/api/admin/approve', (req, res) => {
     const { type, id } = req.body;
     if (type === 'deposit') {
         let d = db.deposits.find(x => x.id == id);
-        if (d && d.status === 'Pending') { d.status = 'Approved'; if (db.users[d.phone]) db.users[d.phone].balance += Number(d.amount); }
+        if (d && d.status === 'Pending') { 
+            d.status = 'Approved'; 
+            if (db.users[d.phone]) {
+                db.users[d.phone].balance += Number(d.amount);
+            }
+        }
     } else if (type === 'withdraw') {
         let w = db.withdrawals.find(x => x.id == id);
         if (w && w.status === 'Pending') w.status = 'Approved';

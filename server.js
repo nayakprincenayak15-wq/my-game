@@ -277,4 +277,6 @@ process.on('uncaughtException', (err) => { console.log('Handled error:', err); }
 process.on('unhandledRejection', (err) => { console.log('Handled rejection:', err); });
 
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => console.log('Server live on port ' + PORT));
+server.listen(PORT, '0.0.0.0', () => {
+    console.log('Server is running and listening on port ' + PORT);
+});

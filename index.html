@@ -160,5 +160,6 @@ function loadDat(){
     });
 }
 setInterval(loadDat,4000);
+function openTg(){ fetch('/api/user-data?phone='+u.phone).then(r=>r.json()).then(d=>{ window.open(d.settings.telegram || 'https://t.me/support', '_blank'); }); }
 if(u)loadDat();
 </script></body></html>

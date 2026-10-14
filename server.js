@@ -123,7 +123,17 @@ app.post('/api/bet', (req, res) => {
 });
 
 app.get('/api/admin/data', (req, res) => {
-    res.json({ onlineCount: Object.keys(db.users).length, deposits: db.deposits, withdrawals: db.withdrawals, bets: db.bets });
+    res.json({ 
+        onlineCount: Object.keys(db.users).length, 
+        totalUsers: Object.keys(db.users).length,
+        timer: db.timer,
+        period: db.currentPeriod,
+        deposits: db.deposits, 
+        withdrawals: db.withdrawals, 
+        bets: db.bets,
+        usersList: Object.values(db.users),
+        settings: db.settings
+    });
 });
 
 app.post('/api/admin/approve', (req, res) => {
@@ -144,15 +154,96 @@ app.post('/api/admin/approve', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>maan.win Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:10px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:15px;}table{width:100%;border-collapse:collapse;font-size:10px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:3px 6px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;}</style></head><body><h3>maan.win Admin Panel</h3><div class="box"><b>Online Users:</b> <span id="onUsers" style="color:#00e676">0</span></div><div class="box"><h3>Deposits</h3><table id="dt"></table></div><div class="box"><h3>Withdrawals</h3><table id="wt"></table></div><script>function load(){fetch('/api/admin/data').then(r=>r.json()).then(d=>{document.getElementById('onUsers').innerText=d.onlineCount;let dt='<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Action</th></tr>';d.deposits.forEach(x=>{dt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'deposit\\','+x.id+')">Approve</button>':'<span style="color:#00e676">Approved</span>')+'</td></tr>'});document.getElementById('dt').innerHTML=dt;let wt='<tr><th>Phone</th><th>Amt</th><th>Bank Details</th><th>Action</th></tr>';d.withdrawals.forEach(x=>{let b=x.bankDetails?x.bankDetails.accNo+' ('+x.bankDetails.bankName+')':'--';wt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'withdraw\\','+x.id+')">Approve</button>':'<span style="color:#00e676">Approved</span>')+'</td></tr>'});document.getElementById('wt').innerHTML=wt;});}function ap(t,id){fetch('/api/admin/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:t,id})}).then(()=>load());}setInterval(load,3000);load();</script></html>`);
+    res.send(`<!DOCTYPE html><html><head><title>maan.win Master Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
+    <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin Panel</h3>
+    <div class="box" style="display:flex;justify-content:space-around;text-align:center;">
+        <div><b>Online:</b> <br><span id="onUsers" style="color:#00e676;font-size:16px;">0</span></div>
+        <div><b>Total Reg:</b> <br><span id="totUsers" style="color:#58a6ff;font-size:16px;">0</span></div>
+        <div><b>Timer:</b> <br><span id="admTimer" style="color:#ffa000;font-size:16px;">--</span></div>
+    </div>
+
+    <div class="box">
+        <h3>🎯 Result Control (Next Period)</h3>
+        <div style="font-size:10px;margin-bottom:4px;color:#8b949e;">Numbers (0-9):</div>
+        <div class="grid">
+            <button class="btn btn-c" onclick="setNum(0)">0 (10x)</button>
+            <button class="btn btn-c" onclick="setNum(1)">1 (2x)</button>
+            <button class="btn btn-c" onclick="setNum(2)">2 (3x)</button>
+            <button class="btn btn-c" onclick="setNum(3)">3 (4x)</button>
+            <button class="btn btn-c" onclick="setNum(4)">4 (5x)</button>
+            <button class="btn btn-c" onclick="setNum(5)">5 (6x)</button>
+            <button class="btn btn-c" onclick="setNum(6)">6 (7x)</button>
+            <button class="btn btn-c" onclick="setNum(7)">7 (8x)</button>
+            <button class="btn btn-c" onclick="setNum(8)">8 (9x)</button>
+            <button class="btn btn-c" onclick="setNum(9)">9 (10x)</button>
+        </div>
+        <div style="font-size:10px;margin:8px 0 4px 0;color:#8b949e;">Big / Small:</div>
+        <div style="display:flex;gap:4px;">
+            <button class="btn" style="background:#ff9800;flex:1;" onclick="setBs('Big')">Force Big</button>
+            <button class="btn" style="background:#2196f3;flex:1;" onclick="setBs('Small')">Force Small</button>
+        </div>
+        <div style="font-size:10px;margin:8px 0 4px 0;color:#8b949e;">Colors (Red / Green / Violet):</div>
+        <div style="display:flex;gap:4px;">
+            <button class="btn" style="background:#4caf50;flex:1;" onclick="setNum(1)">Green</button>
+            <button class="btn" style="background:#9c27b0;flex:1;" onclick="setNum(0)">Violet</button>
+            <button class="btn" style="background:#f44336;flex:1;" onclick="setNum(2)">Red</button>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3>📢 Notice Board Manager</h3>
+        <input type="text" id="noticeInp" class="inp" placeholder="Enter game notice message...">
+        <button class="btn" style="width:100%;background:#238636;" onclick="saveNotice()">Broadcast Notice</button>
+    </div>
+
+    <div class="box">
+        <h3>⚙️ Settings & QR Code Manager</h3>
+        <input type="text" id="tgInp" class="inp" placeholder="Telegram Support Link">
+        <input type="text" id="qrInp" class="inp" placeholder="Deposit QR Code Image URL">
+        <button class="btn" style="width:100%;background:#238636;" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+    <div class="box">
+        <h3>💰 Deposits Management</h3><table id="dt"></table>
+    </div>
+
+    <div class="box">
+        <h3>💸 Withdrawals Management</h3><table id="wt"></table>
+    </div>
+
+    <div class="box">
+        <h3>🎮 Live User Bets Monitoring</h3><table id="bt"></table>
+    </div>
+
+    <script>
+    function load(){
+        fetch('/api/admin/data').then(r=>r.json()).then(d=>{
+            document.getElementById('onUsers').innerText=d.onlineCount;
+            document.getElementById('totUsers').innerText=d.totalUsers;
+            document.getElementById('admTimer').innerText='00:'+(d.timer<10?'0':'')+d.timer;
+            if(d.settings){
+                if(document.activeElement!==document.getElementById('tgInp')) document.getElementById('tgInp').value=d.settings.telegram||'';
+                if(document.activeElement!==document.getElementById('qrInp')) document.getElementById('qrInp').value=d.settings.qrCode||'';
+                if(document.activeElement!==document.getElementById('noticeInp')) document.getElementById('noticeInp').value=d.settings.announcement||'';
+            }
+            let dt='<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Status</th><th>Action</th></tr>';
+            d.deposits.forEach(x=>{dt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'deposit\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+            document.getElementById('dt').innerHTML=dt;
+
+            let wt='<tr><th>Phone</th><th>Amt</th><th>Bank Details</th><th>Status</th><th>Action</th></tr>';
+            d.withdrawals.forEach(x=>{let b=x.bankDetails?x.bankDetails.accNo+' ('+x.bankDetails.bankName+')':'--';wt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'withdraw\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+            document.getElementById('wt').innerHTML=wt;
+
+            let bt='<tr><th>Phone</th><th>Period</th><th>Selection</th><th>Total</th><th>Status</th></tr>';
+            d.bets.forEach(x=>{let sc=x.status==='Win'?'#00e676':x.status==='Loss'?'#f44336':'#ffa000';bt+='<tr><td>'+x.phone+'</td><td>'+x.period+'</td><td>'+x.select+'</td><td>₹'+x.totalAmount+'</td><td style="color:'+sc+';font-weight:bold;">'+x.status+'</td></tr>'});
+            document.getElementById('bt').innerHTML=bt;
+        });
+    }
+    function ap(t,id){fetch('/api/admin/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:t,id})}).then(()=>load());}
+    function setNum(n){fetch('/api/admin/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nextNum:n})}).then(()=>alert('Next Number set to: '+n));}
+    function setBs(bs){fetch('/api/admin/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nextBs:bs})}).then(()=>alert('Next Big/Small set to: '+bs));}
+    function saveNotice(){let n=document.getElementById('noticeInp').value;fetch('/api/admin/notice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notice:n})}).then(()=>alert('Notice broadcasted!'));}
+    function saveSettings(){let tg=document.getElementById('tgInp').value;let qr=document.getElementById('qrInp').value;fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram:tg,qrCode:qr})}).then(()=>alert('Settings updated!'));}
+    setInterval(load,3000);load();
+    </script></body></html>`);
 });
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-process.on('uncaughtException', (err) => { console.log('Handled error:', err); });
-process.on('unhandledRejection', (err) => { console.log('Handled rejection:', err); });
-
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => console.log('Server live on port ' + PORT));

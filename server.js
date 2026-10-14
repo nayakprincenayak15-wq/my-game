@@ -33,26 +33,32 @@ setInterval(() => {
         db.bets.forEach(b => {
             if (b.period === (db.currentPeriod - 1) && b.status === 'Pending') {
                 let win = false;
-                if (typeof b.select === 'number' && b.select === num) win = true;
-                else if (b.select === 'Big' && bs === 'Big') win = true;
-                else if (b.select === 'Small' && bs === 'Small') win = true;
-                else if (b.select.toLowerCase() === col) win = true;
+                let sel = String(b.select).trim().toLowerCase();
+                let numStr = String(num);
+
+                if (sel === numStr) {
+                    win = true;
+                } else if (sel === 'big' && bs === 'Big') {
+                    win = true;
+                } else if (sel === 'small' && bs === 'Small') {
+                    win = true;
+                } else if (sel === col) {
+                    win = true;
+                }
 
                 if (win) {
                     b.status = 'Win';
                     if (db.users[b.phone]) {
-                        let mult = 2.0; // Default for Big/Small/Colors (10 + 10 = 20 total return)
-                        let sel = b.select;
-                        if (sel === 0) mult = 10.0;
-                        else if (sel === 1) mult = 2.0;
-                        else if (sel === 2) mult = 3.0;
-                        else if (sel === 3) mult = 4.0;
-                        else if (sel === 4) mult = 5.0;
-                        else if (sel === 5) mult = 6.0;
-                        else if (sel === 6) mult = 7.0;
-                        else if (sel === 7) mult = 8.0;
-                        else if (sel === 8) mult = 9.0;
-                        else if (sel === 9) mult = 10.0;
+                        let mult = 2.0;
+                        if (sel === '0') mult = 10.0;
+                        else if (sel === '1') mult = 2.0;
+                        else if (sel === '2') mult = 3.0;
+                        else if (sel === '3') mult = 4.0;
+                        else if (sel === '4') mult = 5.0;
+                        else if (sel === '5') mult = 6.0;
+                        else if (sel === '6') mult = 7.0;
+                        else if (sel === '8') mult = 9.0;
+                        else if (sel === '9') mult = 10.0;
                         
                         db.users[b.phone].balance += (b.totalAmount * mult);
                     }
@@ -127,7 +133,7 @@ app.post('/api/admin/approve', (req, res) => {
         if (d && d.status === 'Pending') { 
             d.status = 'Approved'; 
             if (db.users[d.phone]) {
-                db.users[d.phone].balance += Number(d.amount);
+                db.users[d.phone].balance += Number(d.amount); 
             }
         }
     } else if (type === 'withdraw') {
@@ -144,6 +150,9 @@ app.get('/admin', (req, res) => {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+process.on('uncaughtException', (err) => { console.log('Handled error:', err); });
+process.on('unhandledRejection', (err) => { console.log('Handled rejection:', err); });
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => console.log('Server live on port ' + PORT));

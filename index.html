@@ -16,15 +16,7 @@
 </div>
 
 <div class="app">
-  <div class="hdr"><div class="logo">maan.win</div><button class="btn" style="background:#f44336;padding:4px 8px;font-size:10px;" onclick="logout()">Logout</button></div>
-  <div class="card">
-    <div style="font-size:10px;color:#8a9bbd">Balance (<span id="gId">ID: --</span>)</div>
-    <div style="font-size:20px;font-weight:bold">₹<span id="bal">0.00</span></div>
-    <div style="display:flex;gap:6px;margin-top:6px;">
-      <button class="btn btn-dep" onclick="document.getElementById('depModal').style.display='flex'">Deposit</button>
-      <button class="btn btn-wd" onclick="document.getElementById('wdModal').style.display='flex'">Withdraw</button>
-    </div>
-  </div>
+  <div class="hdr"><div class="logo">maan.win</div><div style="display:flex;gap:6px;align-items:center;"><a href="https://t.me/support" target="_blank" style="background:#0088cc;color:#fff;padding:5px 8px;border-radius:4px;font-size:10px;text-decoration:none;font-weight:bold;">Telegram</a><button class="btn" style="background:#f44336;padding:4px 8px;font-size:10px;" onclick="logout()">Logout</button></div></div>
   <div class="tmr">
     <div style="font-size:10px;color:#ffb74d">Period: <span id="prd">--</span></div>
     <div style="font-size:24px;font-weight:bold;color:#00e676" id="tmr">00:30</div>

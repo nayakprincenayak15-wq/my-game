@@ -57,6 +57,7 @@ setInterval(() => {
                         else if (sel === '4') mult = 5.0;
                         else if (sel === '5') mult = 6.0;
                         else if (sel === '6') mult = 7.0;
+                        else if (sel === '7') mult = 8.0;
                         else if (sel === '8') mult = 9.0;
                         else if (sel === '9') mult = 10.0;
                         
@@ -150,6 +151,26 @@ app.post('/api/admin/approve', (req, res) => {
         let w = db.withdrawals.find(x => x.id == id);
         if (w && w.status === 'Pending') w.status = 'Approved';
     }
+    res.json({ success: true });
+});
+
+app.post('/api/admin/control', (req, res) => {
+    const { nextNum, nextBs } = req.body;
+    if(nextNum !== undefined && nextNum !== '') db.manualNextResult = Number(nextNum);
+    if(nextBs !== undefined && nextBs !== '') db.manualBigSmall = nextBs;
+    res.json({ success: true, message: 'Result controlled successfully' });
+});
+
+app.post('/api/admin/notice', (req, res) => {
+    const { notice } = req.body;
+    if(notice !== undefined) db.settings.announcement = notice;
+    res.json({ success: true });
+});
+
+app.post('/api/admin/settings', (req, res) => {
+    const { telegram, qrCode } = req.body;
+    if(telegram) db.settings.telegram = telegram;
+    if(qrCode) db.settings.qrCode = qrCode;
     res.json({ success: true });
 });
 
@@ -247,3 +268,13 @@ app.get('/admin', (req, res) => {
     setInterval(load,3000);load();
     </script></body></html>`);
 });
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+process.on('uncaughtException', (err) => { console.log('Handled error:', err); });
+process.on('unhandledRejection', (err) => { console.log('Handled rejection:', err); });
+
+const PORT = process.env.PORT || 10000;
+server.listen(PORT, '0.0.0.0', () => console.log('Server live on port ' + PORT));

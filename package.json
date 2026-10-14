@@ -1,12 +1,13 @@
 {
-  "name": "maan-win-game",
-  "version": "3.0.0",
+  "name": "wingo-game",
+  "version": "1.0.0",
+  "description": "maan.win color prediction",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.22.3",
-    "socket.io": "^4.8.4"
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
   }
 }

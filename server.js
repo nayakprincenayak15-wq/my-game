@@ -34,22 +34,23 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Robust Admin Route: Checks for admin.html or serves embedded admin dashboard
+// Admin Login GET Route -> Shows Admin Login Page
 app.get('/admin', (req, res) => {
     let adminPath = path.join(__dirname, 'admin.html');
     if (fs.existsSync(adminPath)) {
         return res.sendFile(adminPath);
     }
-    // Fallback search for any html file with admin or dashboard in name
-    let files = fs.readdirSync(__dirname);
-    let found = files.find(f => (f.toLowerCase().includes('admin') || f.toLowerCase().includes('dashboard')) && f.endsWith('.html'));
-    if (found) {
-        return res.sendFile(path.join(__dirname, found));
-    }
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Admin Login POST Route -> Opens Master Admin Dashboard on successful submit
 app.post('/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    let files = fs.readdirSync(__dirname);
+    let dashFile = files.find(f => (f.toLowerCase().includes('dashboard') || f.toLowerCase().includes('panel')) && f.endsWith('.html') && f !== 'admin.html');
+    if (dashFile) {
+        return res.sendFile(path.join(__dirname, dashFile));
+    }
     let adminPath = path.join(__dirname, 'admin.html');
     if (fs.existsSync(adminPath)) {
         return res.sendFile(adminPath);
@@ -57,7 +58,7 @@ app.post('/admin/login', (req, res) => {
     res.redirect('/admin');
 });
 
-// Universal Game Registration API (Allows new numbers instantly)
+// Game Registration API
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!phone) {
@@ -65,14 +66,12 @@ app.post('/api/register', (req, res) => {
     }
     if (!db.users) db.users = {};
     
-    if (!db.users[phone]) {
-        db.users[phone] = { phone, password: password || "123456", balance: 100 };
-        saveDB();
-    }
+    db.users[phone] = { phone, password: password || "123456", balance: 100 };
+    saveDB();
     res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
 });
 
-// Universal Game Login API (Allows seamless entry for any user)
+// Game Login API
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     if (!phone) {

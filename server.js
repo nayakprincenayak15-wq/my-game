@@ -19,7 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-// Real-time 30-Second Game Period Timer Loop
+// 30-Second Live Timer Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -35,22 +35,31 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Admin Panel Access Route
+// Direct Admin Route - Prevents Redirecting to Game
 app.get('/admin', (req, res) => {
-    let adminPath = path.join(__dirname, 'admin.html');
-    if (fs.existsSync(adminPath)) {
-        return res.sendFile(adminPath);
+    let files = fs.readdirSync(__dirname);
+    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
+    
+    if (adminFile) {
+        return res.sendFile(path.join(__dirname, adminFile));
     }
-    return res.sendFile(path.join(__dirname, 'index.html'));
+    
+    let alternativeFile = files.find(f => (f.toLowerCase().includes('panel') || f.toLowerCase().includes('dashboard')) && f.endsWith('.html'));
+    if (alternativeFile) {
+        return res.sendFile(path.join(__dirname, alternativeFile));
+    }
+
+    res.status(404).send("Admin HTML file not found in root folder.");
 });
 
-// Admin Login POST Route (Allows credentials Prince / 6396714538 and direct access)
+// Admin Login POST Route (Redirects directly inside Admin Panel)
 app.post('/admin/login', (req, res) => {
-    let adminPath = path.join(__dirname, 'admin.html');
-    if (fs.existsSync(adminPath)) {
-        return res.sendFile(adminPath);
+    let files = fs.readdirSync(__dirname);
+    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
+    if (adminFile) {
+        return res.sendFile(path.join(__dirname, adminFile));
     }
-    return res.json({ success: true, redirect: '/admin' });
+    return res.redirect('/admin');
 });
 
 // User Registration API
@@ -58,7 +67,6 @@ app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
     
-    // Auto-create/login user if already registered or new
     db.users[phone] = { phone, password, balance: db.users[phone]?.balance || 1000 };
     saveDB();
     
@@ -97,7 +105,7 @@ app.post('/api/bet', (req, res) => {
     res.json({ success: true, message: "Bet placed successfully!" });
 });
 
-// Admin Data Management API
+// Admin Data API
 app.get('/api/admin/data', (req, res) => {
     res.json({
         settings: db.settings || { telegram: '@Rajbr818' },

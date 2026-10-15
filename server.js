@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const DB_PATH = path.join(__dirname, 'db.json');
-let db = { users: {}, history: [], settings: { telegram: '@Rajbr818' }, bets: [] };
+let db = { users: {}, history: [], settings: { telegram: '@Rajbr818' }, bets: [], deposits: [], withdrawals: [] };
 
 if (fs.existsSync(DB_PATH)) {
     try { db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); } catch(e){}
@@ -19,7 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-let currentPeriod = "";
+let currentPeriod = "20261015035389";
 let timerSeconds = 30;
 
 setInterval(() => {
@@ -34,38 +34,40 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Smart Admin Bypass: Direct Admin Dashboard Serve
+// Admin Panel Route
 app.get('/admin', (req, res) => {
     let files = fs.readdirSync(__dirname);
-    // Agar koi doosri dashboard file hai toh woh do, warna index.html ya admin.html
-    let dash = files.find(f => f.toLowerCase().includes('dashboard') && f.endsWith('.html'));
-    if (dash) return res.sendFile(path.join(__dirname, dash));
-    return res.sendFile(path.join(__dirname, 'admin.html'));
+    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
+    if (adminFile) {
+        return res.sendFile(path.join(__dirname, adminFile));
+    }
+    return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.post('/admin/login', (req, res) => {
-    return res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-// Game APIs
+// User Registration API
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
-    db.users[phone] = { phone, password, balance: 1000 };
+    if (db.users[phone]) {
+        return res.json({ success: false, message: "User already registered!" });
+    }
+    db.users[phone] = { phone, password, balance: 100 };
     saveDB();
     res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
 });
 
+// User Login API
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
     if (!db.users[phone]) {
-        db.users[phone] = { phone, password, balance: 1000 };
+        db.users[phone] = { phone, password, balance: 100 };
         saveDB();
     }
     res.json({ success: true, message: "Login successful!", user: db.users[phone] });
 });
 
+// Game State API
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,
@@ -75,6 +77,7 @@ app.get('/api/game-state', (req, res) => {
     });
 });
 
+// Betting API
 app.post('/api/bet', (req, res) => {
     const { phone, amount, choice, period } = req.body;
     if (!db.bets) db.bets = [];
@@ -83,12 +86,15 @@ app.post('/api/bet', (req, res) => {
     res.json({ success: true, message: "Bet placed successfully!" });
 });
 
+// Admin Data API
 app.get('/api/admin/data', (req, res) => {
     res.json({
         settings: db.settings || { telegram: '@Rajbr818' },
         users: db.users || {},
         history: db.history || [],
-        bets: db.bets || []
+        bets: db.bets || [],
+        deposits: db.deposits || [],
+        withdrawals: db.withdrawals || []
     });
 });
 

@@ -161,7 +161,7 @@ app.post('/api/bet', (req, res) => {
 app.get('/api/admin/data', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json({ 
-        onlineCount: Object.keys(db.users).length, 
+        onlineCount: Object.keys(db.users).length + 987654, 
         totalUsers: Object.keys(db.users).length,
         timer: db.timer,
         period: db.currentPeriod,

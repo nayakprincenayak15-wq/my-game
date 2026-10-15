@@ -375,6 +375,15 @@ app.post('/admin/login', express.urlencoded({ extended: true }), (req, res) => {
     </script></body></html>`);
 });
 
+
+app.use('/admin', (req, res, next) => {
+    if (req.path === '/login') return next();
+    if (req.cookies && req.cookies.admin_logged === 'true') {
+        return next();
+    }
+    return res.redirect('/admin-login.html');
+});
+    
 app.use(express.static(path.join(__dirname)));
 app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 

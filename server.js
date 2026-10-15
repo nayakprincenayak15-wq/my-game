@@ -1,14 +1,12 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 const DB_PATH = path.join(__dirname, 'db.json');
 let db = { users: {}, history: [], settings: { telegram: '@Rajbr818' }, bets: [] };
@@ -21,6 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
+// Live 30-Second Timer & Period Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -34,8 +33,20 @@ setInterval(() => {
     currentPeriod = p;
 }, 1000);
 
+// Static files (HTML, JS, CSS)
 app.use(express.static(__dirname));
 
+// Direct Admin Route (No Login Guard)
+app.get('/admin', (req, res) => {
+    let adminFile = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminFile)) {
+        return res.sendFile(adminFile);
+    }
+    let indexFile = path.join(__dirname, 'index.html');
+    return res.sendFile(indexFile);
+});
+
+// APIs
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,

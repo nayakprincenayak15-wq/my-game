@@ -19,6 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
+// Real-time 30-Second Game Period Timer Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -34,54 +35,50 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Smart Admin Route Finder
+// Admin Panel Access Route
 app.get('/admin', (req, res) => {
-    const files = fs.readdirSync(__dirname);
-    let adminFile = files.find(f => 
-        f.toLowerCase() === 'admin.html' || 
-        f.toLowerCase() === 'dashboard.html' || 
-        f.toLowerCase() === 'panel.html' ||
-        (f.toLowerCase().includes('admin') && f.endsWith('.html'))
-    );
-    
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
+    let adminPath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminPath)) {
+        return res.sendFile(adminPath);
     }
-    
-    res.status(404).send("Admin file not found! Folder files are: " + files.join(', '));
+    return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Admin Login POST Route (Allows credentials Prince / 6396714538 and direct access)
 app.post('/admin/login', (req, res) => {
-    const files = fs.readdirSync(__dirname);
-    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
+    let adminPath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminPath)) {
+        return res.sendFile(adminPath);
     }
-    res.redirect('/admin');
+    return res.json({ success: true, redirect: '/admin' });
 });
 
-// User Register & Login APIs
+// User Registration API
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
-    if (db.users[phone]) {
-        return res.json({ success: true, message: "User already exists!" });
-    }
-    db.users[phone] = { phone, password, balance: 1000 };
+    
+    // Auto-create/login user if already registered or new
+    db.users[phone] = { phone, password, balance: db.users[phone]?.balance || 1000 };
     saveDB();
-    res.json({ success: true, message: "Registration successful!" });
+    
+    res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
 });
 
+// User Login API
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
+    
     if (!db.users[phone]) {
         db.users[phone] = { phone, password, balance: 1000 };
         saveDB();
     }
+    
     res.json({ success: true, message: "Login successful!", user: db.users[phone] });
 });
 
+// Live Game State Sync API
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,
@@ -91,6 +88,7 @@ app.get('/api/game-state', (req, res) => {
     });
 });
 
+// Betting API
 app.post('/api/bet', (req, res) => {
     const { phone, amount, choice, period } = req.body;
     if (!db.bets) db.bets = [];
@@ -99,6 +97,7 @@ app.post('/api/bet', (req, res) => {
     res.json({ success: true, message: "Bet placed successfully!" });
 });
 
+// Admin Data Management API
 app.get('/api/admin/data', (req, res) => {
     res.json({
         settings: db.settings || { telegram: '@Rajbr818' },

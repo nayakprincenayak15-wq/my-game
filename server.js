@@ -9,9 +9,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
-app.use(express.static(__dirname));
-
-const DATA_FILE = path.join(__dirname, 'db.json');
+app.use(express.urlencoded({ extended: true }));
 
 let db = {
     users: {}, deposits: [], withdrawals: [], bets: [], gameHistory: [],
@@ -21,6 +19,7 @@ let db = {
     timer: 30
 };
 
+const DATA_FILE = path.join(__dirname, 'db.json');
 if (fs.existsSync(DATA_FILE)) {
     try {
         const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
@@ -139,7 +138,7 @@ app.post('/api/bet', (req, res) => {
 });
 
 app.get('/api/admin/data', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json({ 
         onlineCount: Object.keys(db.users).length, 
         totalUsers: Object.keys(db.users).length,
@@ -192,7 +191,7 @@ app.post('/api/admin/settings', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.send(`<!DOCTYPE html><html><head><title>maan.win Master Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
     <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin Panel</h3>
     <div class="box" style="display:flex;justify-content:space-around;text-align:center;">
@@ -256,57 +255,109 @@ app.get('/admin', (req, res) => {
 
     <script>
     function load(){
-        fetch('/api/admin/data?t=' + Date.now()).then(r=>r.json()).then(d=>{
-            document.getElementById('onUsers').innerText=d.onlineCount||0;
-            document.getElementById('totUsers').innerText=d.totalUsers||0;
-            document.getElementById('admTimer').innerText='00:'+(d.timer<10?'0':'')+d.timer;
+        fetch('/api/admin/data?t=' + Date.now())
+        .then(r => r.json())
+        .then(d => {
+            document.getElementById('onUsers').innerText = d.onlineCount || 0;
+            document.getElementById('totUsers').innerText = d.totalUsers || 0;
+            document.getElementById('admTimer').innerText = '00:' + (d.timer < 10 ? '0' : '') + d.timer;
             if(d.settings){
-                if(document.activeElement!==document.getElementById('tgInp')) document.getElementById('tgInp').value=d.settings.telegram||'';
-                if(document.activeElement!==document.getElementById('qrInp')) document.getElementById('qrInp').value=d.settings.qrCode||'';
-                if(document.activeElement!==document.getElementById('noticeInp')) document.getElementById('noticeInp').value=d.settings.announcement||'';
+                if(document.activeElement !== document.getElementById('tgInp')) document.getElementById('tgInp').value = d.settings.telegram || '';
+                if(document.activeElement !== document.getElementById('qrInp')) document.getElementById('qrInp').value = d.settings.qrCode || '';
+                if(document.activeElement !== document.getElementById('noticeInp')) document.getElementById('noticeInp').value = d.settings.announcement || '';
             }
-            let dt='<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Status</th><th>Action</th></tr>';
+            let dt = '<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Status</th><th>Action</th></tr>';
             if(d.deposits && d.deposits.length > 0){
-                d.deposits.forEach(x=>{dt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'deposit\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+                d.deposits.forEach(x => {
+                    dt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'deposit\\',\'+x.id+\')">Approve</button>':'Done')+'</td></tr>';
+                });
             } else {
-                dt+='<tr><td colspan="5">No deposit requests</td></tr>';
+                dt += '<tr><td colspan="5">No deposit requests</td></tr>';
             }
-            document.getElementById('dt').innerHTML=dt;
+            document.getElementById('dt').innerHTML = dt;
 
-            let wt='<tr><th>Phone</th><th>Amt</th><th>Bank Details</th><th>Status</th><th>Action</th></tr>';
+            let wt = '<tr><th>Phone</th><th>Amt</th><th>Bank Details</th><th>Status</th><th>Action</th></tr>';
             if(d.withdrawals && d.withdrawals.length > 0){
-                d.withdrawals.forEach(x=>{let b=x.bankDetails?x.bankDetails.accNo+' ('+x.bankDetails.bankName+')':'--';wt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'withdraw\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+                d.withdrawals.forEach(x => {
+                    let b = x.bankDetails ? x.bankDetails.accNo+' ('+x.bankDetails.bankName+')' : '--';
+                    wt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'withdraw\\',\'+x.id+\')">Approve</button>':'Done')+'</td></tr>';
+                });
             } else {
-                wt+='<tr><td colspan="5">No withdrawal requests</td></tr>';
+                wt += '<tr><td colspan="5">No withdrawal requests</td></tr>';
             }
-            document.getElementById('wt').innerHTML=wt;
+            document.getElementById('wt').innerHTML = wt;
 
-            let bt='<tr><th>Phone</th><th>Period</th><th>Selection</th><th>Total</th><th>Status</th></tr>';
+            let bt = '<tr><th>Phone</th><th>Period</th><th>Selection</th><th>Total</th><th>Status</th></tr>';
             if(d.bets && d.bets.length > 0){
-                d.bets.forEach(x=>{let sc=x.status==='Win'?'#00e676':x.status==='Loss'?'#f44336':'#ffa000';bt+='<tr><td>'+x.phone+'</td><td>'+x.period+'</td><td>'+x.select+'</td><td>₹'+x.totalAmount+'</td><td style="color:'+sc+';font-weight:bold;">'+x.status+'</td></tr>'});
+                d.bets.forEach(x => {
+                    let sc = x.status==='Win'?'#00e676':x.status==='Loss'?'#f44336':'#ffa000';
+                    bt += '<tr><td>'+x.phone+'</td><td>'+x.period+'</td><td>'+x.select+'</td><td>₹'+x.totalAmount+'</td><td style="color:'+sc+';font-weight:bold;">'+x.status+'</td></tr>';
+                });
             } else {
-                bt+='<tr><td colspan="5">No bets placed yet</td></tr>';
+                bt += '<tr><td colspan="5">No bets placed yet</td></tr>';
             }
-            document.getElementById('bt').innerHTML=bt;
-        }).catch(e=>console.log(e));
+            document.getElementById('bt').innerHTML = bt;
+        })
+        .catch(e => console.log("Admin load error:", e));
     }
-    function ap(t,id){fetch('/api/admin/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:t,id})}).then(()=>load());}
-    function setNum(n){fetch('/api/admin/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nextNum:n})}).then(()=>alert('Next Number set to: '+n));}
-    function setBs(bs){fetch('/api/admin/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nextBs:bs})}).then(()=>alert('Next Big/Small set to: '+bs));}
-    function saveNotice(){let n=document.getElementById('noticeInp').value;fetch('/api/admin/notice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notice:n})}).then(()=>alert('Notice broadcasted!'));}
-    function saveSettings(){let tg=document.getElementById('tgInp').value;let qr=document.getElementById('qrInp').value;fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram:tg,qrCode:qr})}).then(()=>alert('Settings updated!'));}
-    setInterval(load,1000);load();
+
+    function ap(t, id){
+        fetch('/api/admin/approve', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: t, id: id})
+        }).then(r => r.json()).then(res => { alert('Approved successfully!'); load(); });
+    }
+
+    function setNum(n){
+        fetch('/api/admin/control', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({nextNum: n})
+        }).then(r => r.json()).then(res => { alert('Next Number set to: ' + n); });
+    }
+
+    function setBs(bs){
+        fetch('/api/admin/control', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({nextBs: bs})
+        }).then(r => r.json()).then(res => { alert('Next Big/Small set to: ' + bs); });
+    }
+
+    function saveNotice(){
+        let n = document.getElementById('noticeInp').value;
+        fetch('/api/admin/notice', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({notice: n})
+        }).then(r => r.json()).then(res => { alert('Notice broadcasted successfully!'); });
+    }
+
+    function saveSettings(){
+        let tg = document.getElementById('tgInp').value;
+        let qr = document.getElementById('qrInp').value;
+        fetch('/api/admin/settings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({telegram: tg, qrCode: qr})
+        }).then(r => r.json()).then(res => { alert('Settings updated successfully!'); });
+    }
+
+    setInterval(load, 1500);
+    load();
     </script></body></html>`);
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.use(express.static(path.join(__dirname)));
 
-process.on('uncaughtException', (err) => { console.log('Handled error:', err); });
-process.on('unhandledRejection', (err) => { console.log('Handled rejection:', err); });
+app.get('*', (req, res) => {
+    let indexPath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(indexPath)) res.sendFile(indexPath);
+    else res.send("Game index.html not found!");
+});
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log('Server is running and listening on port ' + PORT);
+    console.log('Server live on port ' + PORT);
 });

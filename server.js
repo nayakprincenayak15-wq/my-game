@@ -34,21 +34,28 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Admin Page & Admin Login Post Handler
+// Smart Admin Route Finder
 app.get('/admin', (req, res) => {
-    let adminPath = path.join(__dirname, 'admin.html');
-    if (fs.existsSync(adminPath)) {
-        return res.sendFile(adminPath);
+    const files = fs.readdirSync(__dirname);
+    let adminFile = files.find(f => 
+        f.toLowerCase() === 'admin.html' || 
+        f.toLowerCase() === 'dashboard.html' || 
+        f.toLowerCase() === 'panel.html' ||
+        (f.toLowerCase().includes('admin') && f.endsWith('.html'))
+    );
+    
+    if (adminFile) {
+        return res.sendFile(path.join(__dirname, adminFile));
     }
-    return res.sendFile(path.join(__dirname, 'index.html'));
+    
+    res.status(404).send("Admin file not found! Folder files are: " + files.join(', '));
 });
 
 app.post('/admin/login', (req, res) => {
-    const { username, password } = req.body;
-    // Direct match for admin credentials or bypass to admin dashboard
-    let adminPath = path.join(__dirname, 'admin.html');
-    if (fs.existsSync(adminPath)) {
-        return res.sendFile(adminPath);
+    const files = fs.readdirSync(__dirname);
+    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
+    if (adminFile) {
+        return res.sendFile(path.join(__dirname, adminFile));
     }
     res.redirect('/admin');
 });
@@ -58,7 +65,7 @@ app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
     if (db.users[phone]) {
-        return res.json({ success: true, message: "User already exists, logged in!" });
+        return res.json({ success: true, message: "User already exists!" });
     }
     db.users[phone] = { phone, password, balance: 1000 };
     saveDB();

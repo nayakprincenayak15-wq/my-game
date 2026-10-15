@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const { Server } = require('socket.io');
 
 const app = express();
@@ -10,6 +11,8 @@ const io = new Server(server);
 app.use(express.json());
 app.use(express.static(__dirname));
 
+const DATA_FILE = path.join(__dirname, 'db.json');
+
 let db = {
     users: {}, deposits: [], withdrawals: [], bets: [], gameHistory: [],
     manualNextResult: null, manualBigSmall: null,
@@ -17,6 +20,26 @@ let db = {
     currentPeriod: Number(new Date().toISOString().replace(/[-T:\.Z]/g, '').slice(0, 14)),
     timer: 30
 };
+
+if (fs.existsSync(DATA_FILE)) {
+    try {
+        const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+        db.users = saved.users || {};
+        db.deposits = saved.deposits || [];
+        db.withdrawals = saved.withdrawals || [];
+        db.bets = saved.bets || [];
+        db.settings = saved.settings || db.settings;
+    } catch(e){}
+}
+
+function saveData() {
+    try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify({
+            users: db.users, deposits: db.deposits, withdrawals: db.withdrawals,
+            bets: db.bets, settings: db.settings
+        }));
+    } catch(e){}
+}
 
 setInterval(() => {
     db.timer--;
@@ -37,31 +60,17 @@ setInterval(() => {
                 let sel = String(b.select).trim().toLowerCase();
                 let numStr = String(num);
 
-                if (sel === numStr) {
-                    win = true;
-                } else if (sel === 'big' && bs === 'Big') {
-                    win = true;
-                } else if (sel === 'small' && bs === 'Small') {
-                    win = true;
-                } else if (sel === col) {
-                    win = true;
-                }
+                if (sel === numStr) win = true;
+                else if (sel === 'big' && bs === 'Big') win = true;
+                else if (sel === 'small' && bs === 'Small') win = true;
+                else if (sel === col) win = true;
 
                 if (win) {
                     b.status = 'Win';
                     if (db.users[b.phone]) {
                         let mult = 2.0;
-                        if (sel === '0') mult = 10.0;
-                        else if (sel === '1') mult = 2.0;
-                        else if (sel === '2') mult = 3.0;
-                        else if (sel === '3') mult = 4.0;
-                        else if (sel === '4') mult = 5.0;
-                        else if (sel === '5') mult = 6.0;
-                        else if (sel === '6') mult = 7.0;
-                        else if (sel === '7') mult = 8.0;
-                        else if (sel === '8') mult = 9.0;
-                        else if (sel === '9') mult = 10.0;
-                        
+                        if (sel === '0' || sel === '9') mult = 10.0;
+                        else if (sel >= '1' && sel <= '8') mult = Number(sel) + 1;
                         db.users[b.phone].balance += (b.totalAmount * mult);
                     }
                 } else {
@@ -69,6 +78,7 @@ setInterval(() => {
                 }
             }
         });
+        saveData();
         io.emit('game-result', { gameHistory: db.gameHistory });
     }
     io.emit('timer-update', { timer: db.timer, period: db.currentPeriod });
@@ -80,6 +90,7 @@ app.post('/api/register', (req, res) => {
     if (db.users[phone]) return res.json({ success: false, message: 'Phone already registered!' });
     let gameId = 'MW' + Math.floor(100000 + Math.random() * 900000);
     db.users[phone] = { phone, password, gameId, balance: 0 };
+    saveData();
     res.json({ success: true, user: db.users[phone] });
 });
 
@@ -95,6 +106,7 @@ app.post('/api/deposit', (req, res) => {
     if (!amount || !utr) return res.json({ success: false, message: 'Enter amount and UTR' });
     if (Number(amount) < 100) return res.json({ success: false, message: 'Minimum deposit amount is ₹100' });
     db.deposits.unshift({ id: Date.now(), phone, amount: Number(amount), utr, status: 'Pending' });
+    saveData();
     res.json({ success: true, message: 'Deposit request submitted successfully' });
 });
 
@@ -106,6 +118,7 @@ app.post('/api/withdraw', (req, res) => {
     if (!accName || !accNo || !ifsc || !bankName) return res.json({ success: false, message: 'Fill all bank details' });
     user.balance -= Number(amount);
     db.withdrawals.unshift({ id: Date.now(), phone, amount: Number(amount), bankDetails: { accName, accNo, ifsc, bankName }, status: 'Pending' });
+    saveData();
     res.json({ success: true, message: 'Withdrawal request submitted', newBalance: user.balance });
 });
 
@@ -121,6 +134,7 @@ app.post('/api/bet', (req, res) => {
     if (!user || user.balance < total) return res.json({ success: false, message: 'Insufficient balance' });
     user.balance -= total;
     db.bets.unshift({ id: Date.now(), phone, select, amount: Number(amount), quantity: Number(quantity), totalAmount: total, period: db.currentPeriod, status: 'Pending' });
+    saveData();
     res.json({ success: true, message: 'Bet placed successfully', newBalance: user.balance });
 });
 
@@ -144,14 +158,13 @@ app.post('/api/admin/approve', (req, res) => {
         let d = db.deposits.find(x => x.id == id);
         if (d && d.status === 'Pending') { 
             d.status = 'Approved'; 
-            if (db.users[d.phone]) {
-                db.users[d.phone].balance += Number(d.amount); 
-            }
+            if (db.users[d.phone]) db.users[d.phone].balance += Number(d.amount); 
         }
     } else if (type === 'withdraw') {
         let w = db.withdrawals.find(x => x.id == id);
         if (w && w.status === 'Pending') w.status = 'Approved';
     }
+    saveData();
     res.json({ success: true });
 });
 
@@ -165,6 +178,7 @@ app.post('/api/admin/control', (req, res) => {
 app.post('/api/admin/notice', (req, res) => {
     const { notice } = req.body;
     if(notice !== undefined) db.settings.announcement = notice;
+    saveData();
     res.json({ success: true });
 });
 
@@ -172,6 +186,7 @@ app.post('/api/admin/settings', (req, res) => {
     const { telegram, qrCode } = req.body;
     if(telegram) db.settings.telegram = telegram;
     if(qrCode) db.settings.qrCode = qrCode;
+    saveData();
     res.json({ success: true });
 });
 

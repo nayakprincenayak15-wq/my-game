@@ -252,7 +252,25 @@ app.post('/api/admin/settings', (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/admin', (req, res) => {
+
+// Admin Login Protection middleware
+function checkAdminAuth(req, res, next) {
+    const auth = req.headers['authorization'];
+    if (!auth) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
+        return res.status(401).send('Authentication required.');
+    }
+    const buf = Buffer.from(auth.split(' ')[1], 'base64').toString().ascii ? Buffer.from(auth.split(' ')[1], 'base64').toString() : Buffer.from(auth.split(' ')[1], 'base64').toString('utf8');
+    const [user, pass] = buf.split(':');
+    if (user === 'Prince' && pass === '6396714538') {
+        return next();
+    }
+    res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
+    return res.status(401).send('Invalid credentials.');
+}
+
+app.get('/admin', checkAdminAuth, (req, res) => {
+    
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.send(`<!DOCTYPE html><html><head><title>maan.win Master Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.btn-r{background:#da3633;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
     <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin Panel</h3>

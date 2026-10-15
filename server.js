@@ -19,7 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-// Live 30-Second Timer & Period Loop
+// Timer Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -33,20 +33,19 @@ setInterval(() => {
     currentPeriod = p;
 }, 1000);
 
-// Static files (HTML, JS, CSS)
+// Serve static files first
 app.use(express.static(__dirname));
 
-// Direct Admin Route (No Login Guard)
+// Fallback for Admin route - serves admin file or index
 app.get('/admin', (req, res) => {
-    let adminFile = path.join(__dirname, 'admin.html');
-    if (fs.existsSync(adminFile)) {
-        return res.sendFile(adminFile);
+    const files = fs.readdirSync(__dirname);
+    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
+    if (adminFile) {
+        return res.sendFile(path.join(__dirname, adminFile));
     }
-    let indexFile = path.join(__dirname, 'index.html');
-    return res.sendFile(indexFile);
+    return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// APIs
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,
@@ -60,7 +59,6 @@ app.post('/api/bet', (req, res) => {
     const { phone, amount, choice, period } = req.body;
     if (!db.users) db.users = {};
     if (!db.bets) db.bets = [];
-    
     db.bets.push({ phone, amount, choice, period, time: new Date() });
     saveDB();
     res.json({ success: true, message: "Bet placed successfully!" });

@@ -34,7 +34,7 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Admin Login GET Route -> Shows Admin Login Page
+// Admin route
 app.get('/admin', (req, res) => {
     let adminPath = path.join(__dirname, 'admin.html');
     if (fs.existsSync(adminPath)) {
@@ -43,47 +43,31 @@ app.get('/admin', (req, res) => {
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Admin Login POST Route -> Opens Master Admin Dashboard on successful submit
 app.post('/admin/login', (req, res) => {
-    const { username, password } = req.body;
-    let files = fs.readdirSync(__dirname);
-    let dashFile = files.find(f => (f.toLowerCase().includes('dashboard') || f.toLowerCase().includes('panel')) && f.endsWith('.html') && f !== 'admin.html');
-    if (dashFile) {
-        return res.sendFile(path.join(__dirname, dashFile));
-    }
     let adminPath = path.join(__dirname, 'admin.html');
     if (fs.existsSync(adminPath)) {
         return res.sendFile(adminPath);
     }
-    res.redirect('/admin');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Game Registration API
+// Game APIs
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
-    if (!phone) {
-        return res.json({ success: false, message: "Phone number is required!" });
-    }
     if (!db.users) db.users = {};
-    
-    db.users[phone] = { phone, password: password || "123456", balance: 100 };
+    db.users[phone] = { phone, password, balance: 100 };
     saveDB();
-    res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
+    res.json({ success: true, message: "Success", user: db.users[phone] });
 });
 
-// Game Login API
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
-    if (!phone) {
-        return res.json({ success: false, message: "Phone number is required!" });
-    }
     if (!db.users) db.users = {};
-    
     if (!db.users[phone]) {
-        db.users[phone] = { phone, password: password || "123456", balance: 100 };
+        db.users[phone] = { phone, password, balance: 100 };
         saveDB();
     }
-    res.json({ success: true, message: "Login successful!", user: db.users[phone] });
+    res.json({ success: true, message: "Success", user: db.users[phone] });
 });
 
 app.get('/api/game-state', (req, res) => {
@@ -100,7 +84,7 @@ app.post('/api/bet', (req, res) => {
     if (!db.bets) db.bets = [];
     db.bets.push({ phone, amount, choice, period, time: new Date() });
     saveDB();
-    res.json({ success: true, message: "Bet placed successfully!" });
+    res.json({ success: true, message: "Success" });
 });
 
 app.get('/api/admin/data', (req, res) => {

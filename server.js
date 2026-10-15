@@ -19,7 +19,6 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-// Timer Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -33,15 +32,12 @@ setInterval(() => {
     currentPeriod = p;
 }, 1000);
 
-// Serve static files first
 app.use(express.static(__dirname));
 
-// Fallback for Admin route - serves admin file or index
 app.get('/admin', (req, res) => {
-    const files = fs.readdirSync(__dirname);
-    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
+    let adminPath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminPath)) {
+        return res.sendFile(adminPath);
     }
     return res.sendFile(path.join(__dirname, 'index.html'));
 });

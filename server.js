@@ -19,7 +19,6 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-// Live 30-Second Timer Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -35,10 +34,9 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Helper to find and serve the real Admin Dashboard file directly
-function serveAdminDashboard(req, res) {
+// Direct Admin Panel Bypass - No Password Required
+app.get('/admin', (req, res) => {
     let files = fs.readdirSync(__dirname);
-    // Look for dashboard or secondary html files if admin.html contains login form
     let dashboardFile = files.find(f => (f.toLowerCase().includes('dashboard') || f.toLowerCase().includes('panel')) && f.endsWith('.html'));
     if (dashboardFile) {
         return res.sendFile(path.join(__dirname, dashboardFile));
@@ -48,30 +46,20 @@ function serveAdminDashboard(req, res) {
         return res.sendFile(path.join(__dirname, adminFile));
     }
     return res.sendFile(path.join(__dirname, 'index.html'));
-}
-
-// Direct Admin Route Bypass
-app.get('/admin', (req, res) => {
-    return serveAdminDashboard(req, res);
 });
 
-// Admin Login POST Route Bypass (Instantly opens Admin Dashboard without refreshing)
-app.post('/admin/login', (req, res) => {
-    const { username, password } = req.body;
-    // Accept any login attempt or specific admin credentials and send dashboard
-    return serveAdminDashboard(req, res);
-});
-
-// Game Registration API
+// Game Login & Register APIs
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
-    db.users[phone] = { phone, password, balance: db.users[phone]?.balance || 1000 };
+    if (db.users[phone]) {
+        return res.json({ success: true, message: "User already exists!", user: db.users[phone] });
+    }
+    db.users[phone] = { phone, password, balance: 1000 };
     saveDB();
     res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
 });
 
-// Game Login API
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};

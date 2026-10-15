@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 let db = {
-    users: {}, deposits: [], withdrawals: [], bets: [], gameHistory: [],
+    users: {}, deposits: [], withdrawals: [], bets: [], gameHistory: [], referrals: [],
     manualNextResult: null, manualBigSmall: null,
     settings: { telegram: 'https://t.me/support', announcement: 'Welcome to maan.win!', qrCode: 'https://via.placeholder.com/150' },
     currentPeriod: Number(new Date().toISOString().replace(/[-T:\.Z]/g, '').slice(0, 14)),
@@ -27,6 +27,7 @@ if (fs.existsSync(DATA_FILE)) {
         db.deposits = saved.deposits || [];
         db.withdrawals = saved.withdrawals || [];
         db.bets = saved.bets || [];
+        db.referrals = saved.referrals || [];
         db.settings = saved.settings || db.settings;
     } catch(e){}
 }
@@ -35,7 +36,7 @@ function saveData() {
     try {
         fs.writeFileSync(DATA_FILE, JSON.stringify({
             users: db.users, deposits: db.deposits, withdrawals: db.withdrawals,
-            bets: db.bets, settings: db.settings
+            bets: db.bets, referrals: db.referrals, settings: db.settings
         }));
     } catch(e){}
 }
@@ -84,11 +85,18 @@ setInterval(() => {
 }, 1000);
 
 app.post('/api/register', (req, res) => {
-    const { phone, password } = req.body;
+    const { phone, password, refCode } = req.body;
     if (!phone || phone.length !== 10 || !password) return res.json({ success: false, message: 'Enter valid 10-digit phone & password' });
     if (db.users[phone]) return res.json({ success: false, message: 'Phone already registered!' });
     let gameId = 'MW' + Math.floor(100000 + Math.random() * 900000);
-    db.users[phone] = { phone, password, gameId, balance: 0, isBlocked: false };
+    
+    let referredBy = null;
+    if (refCode && db.users[refCode]) {
+        referredBy = refCode;
+        db.referrals.unshift({ id: Date.now(), referrer: refCode, referred: phone, depositAmount: 0, bonusPaid: 0, status: 'Pending Deposit' });
+    }
+
+    db.users[phone] = { phone, password, gameId, balance: 0, isBlocked: false, referredBy };
     saveData();
     res.json({ success: true, user: db.users[phone] });
 });
@@ -159,6 +167,7 @@ app.get('/api/admin/data', (req, res) => {
         deposits: db.deposits, 
         withdrawals: db.withdrawals, 
         bets: db.bets,
+        referrals: db.referrals,
         usersList: Object.values(db.users),
         settings: db.settings
     });
@@ -170,7 +179,20 @@ app.post('/api/admin/approve', (req, res) => {
         let d = db.deposits.find(x => x.id == id);
         if (d && d.status === 'Pending') { 
             d.status = 'Approved'; 
-            if (db.users[d.phone]) db.users[d.phone].balance += Number(d.amount); 
+            if (db.users[d.phone]) {
+                db.users[d.phone].balance += Number(d.amount); 
+                
+                let ref = db.referrals.find(r => r.referred === d.phone && r.bonusPaid === 0);
+                if (ref) {
+                    ref.depositAmount = Number(d.amount);
+                    let bonus = Number(d.amount) * 0.10;
+                    if (db.users[ref.referrer]) {
+                        db.users[ref.referrer].balance += bonus;
+                        ref.bonusPaid = bonus;
+                        ref.status = '10% Bonus Paid (₹' + bonus + ')';
+                    }
+                }
+            }
         }
     } else if (type === 'withdraw') {
         let w = db.withdrawals.find(x => x.id == id);
@@ -180,15 +202,28 @@ app.post('/api/admin/approve', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/admin/give-ref-bonus', (req, res) => {
+    const { id } = req.body;
+    let ref = db.referrals.find(r => r.id == id);
+    if (ref && ref.bonusPaid === 0) {
+        let bonus = ref.depositAmount > 0 ? (ref.depositAmount * 0.10) : 10;
+        if (db.users[ref.referrer]) {
+            db.users[ref.referrer].balance += bonus;
+            ref.bonusPaid = bonus;
+            ref.status = 'Manual Bonus Paid (₹' + bonus + ')';
+            saveData();
+            return res.json({ success: true, message: 'Bonus given successfully!' });
+        }
+    }
+    res.json({ success: false, message: 'Bonus already paid or invalid referral' });
+});
+
 app.post('/api/admin/user-action', (req, res) => {
     const { phone, action, newPassword } = req.body;
     let user = db.users[phone];
     if (user) {
-        if (action === 'toggleBlock') {
-            user.isBlocked = !user.isBlocked;
-        } else if (action === 'changePass' && newPassword) {
-            user.password = newPassword;
-        }
+        if (action === 'toggleBlock') user.isBlocked = !user.isBlocked;
+        else if (action === 'changePass' && newPassword) user.password = newPassword;
         saveData();
         return res.json({ success: true, message: 'User updated successfully' });
     }
@@ -269,6 +304,11 @@ app.get('/admin', (req, res) => {
     </div>
 
     <div class="box">
+        <h3>👥 Refer & Bonus Management (10% First Deposit)</h3>
+        <table id="reft"></table>
+    </div>
+
+    <div class="box">
         <h3>👤 User Accounts Manager (Block / Password)</h3>
         <table id="ut"></table>
     </div>
@@ -298,6 +338,17 @@ app.get('/admin', (req, res) => {
                 if(document.activeElement !== document.getElementById('qrInp')) document.getElementById('qrInp').value = d.settings.qrCode || '';
                 if(document.activeElement !== document.getElementById('noticeInp')) document.getElementById('noticeInp').value = d.settings.announcement || '';
             }
+
+            let reft = '<tr><th>Referrer</th><th>Referred User</th><th>Deposit</th><th>Status</th><th>Bonus Action</th></tr>';
+            if(d.referrals && d.referrals.length > 0){
+                d.referrals.forEach(r => {
+                    let btn = r.bonusPaid === 0 ? '<button class="btn" onclick="giveBonus('+r.id+')">Give 10% Bonus</button>' : 'Paid (₹'+r.bonusPaid+')';
+                    reft += '<tr><td>'+r.referrer+'</td><td>'+r.referred+'</td><td>₹'+r.depositAmount+'</td><td>'+r.status+'</td><td>'+btn+'</td></tr>';
+                });
+            } else {
+                reft += '<tr><td colspan="5">No referral tracking data yet</td></tr>';
+            }
+            document.getElementById('reft').innerHTML = reft;
 
             let ut = '<tr><th>Phone</th><th>Balance</th><th>Status</th><th>Block/Unblock</th><th>Pass</th></tr>';
             if(d.usersList && d.usersList.length > 0){
@@ -345,6 +396,14 @@ app.get('/admin', (req, res) => {
             document.getElementById('bt').innerHTML = bt;
         })
         .catch(e => console.log("Admin load error:", e));
+    }
+
+    function giveBonus(id){
+        fetch('/api/admin/give-ref-bonus', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id: id})
+        }).then(r => r.json()).then(res => { alert(res.message); load(); });
     }
 
     function toggleBlock(p){

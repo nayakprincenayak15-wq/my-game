@@ -19,6 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
+// Global Live Timer
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -32,12 +33,20 @@ setInterval(() => {
     currentPeriod = p;
 }, 1000);
 
+// Static Asset Pipeline
 app.use(express.static(__dirname));
 
+// Direct Admin Route Mapping
 app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
+    let files = fs.readdirSync(__dirname);
+    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
+    if (adminFile) {
+        return res.sendFile(path.join(__dirname, adminFile));
+    }
+    return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// APIs
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,

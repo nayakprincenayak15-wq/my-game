@@ -29,6 +29,7 @@ if (fs.existsSync(DATA_FILE)) {
         db.bets = saved.bets || [];
         db.referrals = saved.referrals || [];
         db.settings = saved.settings || db.settings;
+        db.gameHistory = saved.gameHistory || [];
     } catch(e){}
 }
 
@@ -36,7 +37,7 @@ function saveData() {
     try {
         fs.writeFileSync(DATA_FILE, JSON.stringify({
             users: db.users, deposits: db.deposits, withdrawals: db.withdrawals,
-            bets: db.bets, referrals: db.referrals, settings: db.settings
+            bets: db.bets, referrals: db.referrals, settings: db.settings, gameHistory: db.gameHistory
         }));
     } catch(e){}
 }
@@ -252,102 +253,67 @@ app.post('/api/admin/settings', (req, res) => {
     res.json({ success: true });
 });
 
-
-// Admin Login Protection middleware
 function checkAdminAuth(req, res, next) {
     const auth = req.headers['authorization'];
     if (!auth) {
         res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
         return res.status(401).send('Authentication required.');
     }
-    const buf = Buffer.from(auth.split(' ')[1], 'base64').toString().ascii ? Buffer.from(auth.split(' ')[1], 'base64').toString() : Buffer.from(auth.split(' ')[1], 'base64').toString('utf8');
+    const buf = Buffer.from(auth.split(' ')[1], 'base64').toString('utf8');
     const [user, pass] = buf.split(':');
-    if (user === 'Prince' && pass === '6396714538') {
-        return next();
-    }
+    if (user === 'Prince' && pass === '6396714538') return next();
     res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
     return res.status(401).send('Invalid credentials.');
 }
 
 app.get('/admin', checkAdminAuth, (req, res) => {
-    
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.send(`<!DOCTYPE html><html><head><title>maan.win Master Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.btn-r{background:#da3633;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
-    <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin Panel</h3>
+    res.send(`<!DOCTYPE html><html><head><title>maan.win Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.btn-r{background:#da3633;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
+    <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin</h3>
     <div class="box" style="display:flex;justify-content:space-around;text-align:center;">
-        <div><b>Online:</b> <br><span id="onUsers" style="color:#00e676;font-size:16px;">0</span></div>
-        <div><b>Total Reg:</b> <br><span id="totUsers" style="color:#58a6ff;font-size:16px;">0</span></div>
-        <div><b>Timer:</b> <br><span id="admTimer" style="color:#ffa000;font-size:16px;">--</span></div>
+        <div><b>Online:</b><br><span id="onUsers" style="color:#00e676;font-size:16px;">0</span></div>
+        <div><b>Total Reg:</b><br><span id="totUsers" style="color:#58a6ff;font-size:16px;">0</span></div>
+        <div><b>Timer:</b><br><span id="admTimer" style="color:#ffa000;font-size:16px;">--</span></div>
     </div>
-
     <div class="box">
-        <h3>🎯 Result Control (Next Period)</h3>
-        <div style="font-size:10px;margin-bottom:4px;color:#8b949e;">Numbers (0-9):</div>
+        <h3>🔍 User History Search Box</h3>
+        <input type="text" id="searchPhoneInp" class="inp" placeholder="Enter 10-digit phone number...">
+        <button class="btn" style="width:100%;background:#1f6feb;" onclick="searchUserHistory()">Search User History</button>
+        <div id="searchResultBox" style="margin-top:8px;font-size:10px;"></div>
+    </div>
+    <div class="box">
+        <h3>🎯 Result Control</h3>
         <div class="grid">
-            <button class="btn btn-c" onclick="setNum(0)">0 (10x)</button>
-            <button class="btn btn-c" onclick="setNum(1)">1 (2x)</button>
-            <button class="btn btn-c" onclick="setNum(2)">2 (3x)</button>
-            <button class="btn btn-c" onclick="setNum(3)">3 (4x)</button>
-            <button class="btn btn-c" onclick="setNum(4)">4 (5x)</button>
-            <button class="btn btn-c" onclick="setNum(5)">5 (6x)</button>
-            <button class="btn btn-c" onclick="setNum(6)">6 (7x)</button>
-            <button class="btn btn-c" onclick="setNum(7)">7 (8x)</button>
-            <button class="btn btn-c" onclick="setNum(8)">8 (9x)</button>
-            <button class="btn btn-c" onclick="setNum(9)">9 (10x)</button>
+            <button class="btn btn-c" onclick="setNum(0)">0</button><button class="btn btn-c" onclick="setNum(1)">1</button><button class="btn btn-c" onclick="setNum(2)">2</button><button class="btn btn-c" onclick="setNum(3)">3</button><button class="btn btn-c" onclick="setNum(4)">4</button>
+            <button class="btn btn-c" onclick="setNum(5)">5</button><button class="btn btn-c" onclick="setNum(6)">6</button><button class="btn btn-c" onclick="setNum(7)">7</button><button class="btn btn-c" onclick="setNum(8)">8</button><button class="btn btn-c" onclick="setNum(9)">9</button>
         </div>
-        <div style="font-size:10px;margin:8px 0 4px 0;color:#8b949e;">Big / Small:</div>
-        <div style="display:flex;gap:4px;">
-            <button class="btn" style="background:#ff9800;flex:1;" onclick="setBs('Big')">Force Big</button>
-            <button class="btn" style="background:#2196f3;flex:1;" onclick="setBs('Small')">Force Small</button>
-        </div>
-        <div style="font-size:10px;margin:8px 0 4px 0;color:#8b949e;">Colors (Red / Green / Violet):</div>
-        <div style="display:flex;gap:4px;">
-            <button class="btn" style="background:#4caf50;flex:1;" onclick="setNum(1)">Green</button>
-            <button class="btn" style="background:#9c27b0;flex:1;" onclick="setNum(0)">Violet</button>
-            <button class="btn" style="background:#f44336;flex:1;" onclick="setNum(2)">Red</button>
+        <div style="display:flex;gap:4px;margin-top:6px;">
+            <button class="btn" style="background:#ff9800;flex:1;" onclick="setBs('Big')">Big</button>
+            <button class="btn" style="background:#2196f3;flex:1;" onclick="setBs('Small')">Small</button>
         </div>
     </div>
-
     <div class="box">
-        <h3>📢 Notice Board Manager</h3>
-        <input type="text" id="noticeInp" class="inp" placeholder="Enter game notice message...">
-        <button class="btn" style="width:100%;background:#238636;" onclick="saveNotice()">Broadcast Notice</button>
+        <h3>📢 Notice Manager</h3>
+        <input type="text" id="noticeInp" class="inp" placeholder="Enter notice...">
+        <button class="btn" style="width:100%;background:#238636;" onclick="saveNotice()">Broadcast</button>
     </div>
-
     <div class="box">
-        <h3>⚙️ Settings & QR Code Manager</h3>
-        <input type="text" id="tgInp" class="inp" placeholder="Telegram Support Link">
-        <input type="text" id="qrInp" class="inp" placeholder="Deposit QR Code Image URL">
-        <button class="btn" style="width:100%;background:#238636;" onclick="saveSettings()">Save Settings</button>
+        <h3>⚙️ Settings & Telegram Link</h3>
+        <input type="text" id="tgInp" class="inp" placeholder="Telegram Link">
+        <input type="text" id="qrInp" class="inp" placeholder="Deposit QR URL">
+        <button class="btn" style="width:100%;background:#238636;" onclick="saveSettings()">Save</button>
     </div>
-
-    <div class="box">
-        <h3>👥 Refer & Bonus Management (10% First Deposit)</h3>
-        <table id="reft"></table>
-    </div>
-
-    <div class="box">
-        <h3>👤 User Accounts Manager (Block / Password)</h3>
-        <table id="ut"></table>
-    </div>
-
-    <div class="box">
-        <h3>💰 Deposits Management</h3><table id="dt"></table>
-    </div>
-
-    <div class="box">
-        <h3>💸 Withdrawals Management</h3><table id="wt"></table>
-    </div>
-
-    <div class="box">
-        <h3>🎮 Live User Bets Monitoring</h3><table id="bt"></table>
-    </div>
+    <div class="box"><h3>👥 Referrals</h3><table id="reft"></table></div>
+    <div class="box"><h3>👤 Users</h3><table id="ut"></table></div>
+    <div class="box"><h3>💰 Deposits</h3><table id="dt"></table></div>
+    <div class="box"><h3>💸 Withdrawals</h3><table id="wt"></table></div>
+    <div class="box"><h3>🎮 Live Bets</h3><table id="bt"></table></div>
 
     <script>
+    let globalData = {};
     function load(){
-        fetch('/api/admin/data?t=' + Date.now())
-        .then(r => r.json())
-        .then(d => {
+        fetch('/api/admin/data?t=' + Date.now()).then(r => r.json()).then(d => {
+            globalData = d;
             document.getElementById('onUsers').innerText = d.onlineCount || 0;
             document.getElementById('totUsers').innerText = d.totalUsers || 0;
             document.getElementById('admTimer').innerText = '00:' + (d.timer < 10 ? '0' : '') + d.timer;
@@ -356,179 +322,68 @@ app.get('/admin', checkAdminAuth, (req, res) => {
                 if(document.activeElement !== document.getElementById('qrInp')) document.getElementById('qrInp').value = d.settings.qrCode || '';
                 if(document.activeElement !== document.getElementById('noticeInp')) document.getElementById('noticeInp').value = d.settings.announcement || '';
             }
+            let reft = '<tr><th>Referrer</th><th>Referred</th><th>Deposit</th><th>Action</th></tr>';
+            (d.referrals||[]).forEach(r => {
+                let btn = r.bonusPaid === 0 ? '<button class="btn" onclick="giveBonus('+r.id+')">Give 10%</button>' : 'Paid';
+                reft += '<tr><td>'+r.referrer+'</td><td>'+r.referred+'</td><td>₹'+r.depositAmount+'</td><td>'+btn+'</td></tr>';
+            });
+            document.getElementById('reft').innerHTML = reft || '<tr><td colspan="4">No data</td></tr>';
 
-            let reft = '<tr><th>Referrer</th><th>Referred User</th><th>Deposit</th><th>Status</th><th>Bonus Action</th></tr>';
-            if(d.referrals && d.referrals.length > 0){
-                d.referrals.forEach(r => {
-                    let btn = r.bonusPaid === 0 ? '<button class="btn" onclick="giveBonus('+r.id+')">Give 10% Bonus</button>' : 'Paid (₹'+r.bonusPaid+')';
-                    reft += '<tr><td>'+r.referrer+'</td><td>'+r.referred+'</td><td>₹'+r.depositAmount+'</td><td>'+r.status+'</td><td>'+btn+'</td></tr>';
-                });
-            } else {
-                reft += '<tr><td colspan="5">No referral tracking data yet</td></tr>';
-            }
-            document.getElementById('reft').innerHTML = reft;
+            let ut = '<tr><th>Phone</th><th>Balance</th><th>Status</th><th>Block</th><th>Pass</th></tr>';
+            (d.usersList||[]).forEach(u => {
+                let btn = u.isBlocked ? '<button class="btn" onclick="toggleBlock(\\''+u.phone+'\\')">Unblock</button>' : '<button class="btn btn-r" onclick="toggleBlock(\\''+u.phone+'\\')">Block</button>';
+                ut += '<tr><td>'+u.phone+'</td><td>₹'+u.balance+'</td><td>'+(u.isBlocked?'Blocked':'Active')+'</td><td>'+btn+'</td><td><button class="btn btn-c" onclick="chPass(\\''+u.phone+'\\')">Change</button></td></tr>';
+            });
+            document.getElementById('ut').innerHTML = ut || '<tr><td colspan="5">No users</td></tr>';
 
-            let ut = '<tr><th>Phone</th><th>Balance</th><th>Status</th><th>Block/Unblock</th><th>Pass</th></tr>';
-            if(d.usersList && d.usersList.length > 0){
-                d.usersList.forEach(u => {
-                    let st = u.isBlocked ? '<span style="color:#f44336">Blocked</span>' : '<span style="color:#00e676">Active</span>';
-                    let btnTxt = u.isBlocked ? 'Unblock' : 'Block';
-                    let btnCls = u.isBlocked ? 'btn' : 'btn btn-r';
-                    ut += '<tr><td>'+u.phone+'</td><td>₹'+u.balance+'</td><td>'+st+'</td><td><button class="'+btnCls+'" onclick="toggleBlock(\\''+u.phone+'\\')">'+btnTxt+'</button></td><td><button class="btn btn-c" onclick="chPass(\\''+u.phone+'\\')">Change</button></td></tr>';
-                });
-            } else {
-                ut += '<tr><td colspan="5">No registered users</td></tr>';
-            }
-            document.getElementById('ut').innerHTML = ut;
+            let dt = '<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Action</th></tr>';
+            (d.deposits||[]).forEach(x => {
+                dt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'deposit\\','+x.id+')">Approve</button>':x.status)+'</td></tr>';
+            });
+            document.getElementById('dt').innerHTML = dt || '<tr><td colspan="4">No deposits</td></tr>';
 
-            let dt = '<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Status</th><th>Action</th></tr>';
-            if(d.deposits && d.deposits.length > 0){
-                d.deposits.forEach(x => {
-                    dt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'deposit\\','+x.id+')">Approve</button>':'Done')+'</td></tr>';
-                });
-            } else {
-                dt += '<tr><td colspan="5">No deposit requests</td></tr>';
-            }
-            document.getElementById('dt').innerHTML = dt;
+            let wt = '<tr><th>Phone</th><th>Amt</th><th>Status</th><th>Action</th></tr>';
+            (d.withdrawals||[]).forEach(x => {
+                wt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'withdraw\\','+x.id+')">Approve</button>':'Done')+'</td></tr>';
+            });
+            document.getElementById('wt').innerHTML = wt || '<tr><td colspan="4">No withdrawals</td></tr>';
 
-            let wt = '<tr><th>Phone</th><th>Amt</th><th>Bank Details</th><th>Status</th><th>Action</th></tr>';
-            if(d.withdrawals && d.withdrawals.length > 0){
-                d.withdrawals.forEach(x => {
-                    let b = x.bankDetails ? x.bankDetails.accNo+' ('+x.bankDetails.bankName+')' : '--';
-                    wt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'withdraw\\','+x.id+')">Approve</button>':'Done')+'</td></tr>';
-                });
-            } else {
-                wt += '<tr><td colspan="5">No withdrawal requests</td></tr>';
-            }
-            document.getElementById('wt').innerHTML = wt;
-
-            let bt = '<tr><th>Phone</th><th>Period</th><th>Selection</th><th>Total</th><th>Status</th></tr>';
-            if(d.bets && d.bets.length > 0){
-                d.bets.forEach(x => {
-                    let sc = x.status==='Win'?'#00e676':x.status==='Loss'?'#f44336':'#ffa000';
-                    bt += '<tr><td>'+x.phone+'</td><td>'+x.period+'</td><td>'+x.select+'</td><td>₹'+x.totalAmount+'</td><td style="color:'+sc+';font-weight:bold;">'+x.status+'</td></tr>';
-                });
-            } else {
-                bt += '<tr><td colspan="5">No bets placed yet</td></tr>';
-            }
-            document.getElementById('bt').innerHTML = bt;
-        })
-        .catch(e => console.log("Admin load error:", e));
+            let bt = '<tr><th>Phone</th><th>Period</th><th>Select</th><th>Amt</th><th>Status</th></tr>';
+            (d.bets||[]).slice(0, 20).forEach(x => {
+                bt += '<tr><td>'+x.phone+'</td><td>'+x.period+'</td><td>'+x.select+'</td><td>₹'+x.totalAmount+'</td><td>'+x.status+'</td></tr>';
+            });
+            document.getElementById('bt').innerHTML = bt || '<tr><td colspan="5">No bets</td></tr>';
+        }).catch(e=>{});
     }
 
-    function giveBonus(id){
-        fetch('/api/admin/give-ref-bonus', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({id: id})
-        }).then(r => r.json()).then(res => { alert(res.message); load(); });
+    function searchUserHistory(){
+        let phone = document.getElementById('searchPhoneInp').value.trim();
+        let box = document.getElementById('searchResultBox');
+        if(!phone || !globalData.usersList) { box.innerHTML = '<span style="color:#f44336">Enter phone</span>'; return; }
+        let u = globalData.usersList.find(x => x.phone === phone);
+        if(!u) { box.innerHTML = '<span style="color:#f44336">User not found</span>'; return; }
+        let userDeps = (globalData.deposits || []).filter(d => d.phone === phone);
+        let userWds = (globalData.withdrawals || []).filter(w => w.phone === phone);
+        let userBets = (globalData.bets || []).filter(b => b.phone === phone);
+        box.innerHTML = '<div style="background:#0d1117;padding:6px;border-radius:4px;border:1px solid #30363d;">Phone: '+u.phone+' | Bal: ₹'+u.balance+'<br>Deps: '+userDeps.length+' | Wds: '+userWds.length+' | Bets: '+userBets.length+'</div>';
     }
 
-    function toggleBlock(p){
-        fetch('/api/admin/user-action', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({phone: p, action: 'toggleBlock'})
-        }).then(r => r.json()).then(res => { alert(res.message); load(); });
-    }
+    function giveBonus(id){ fetch('/api/admin/give-ref-bonus', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id}) }).then(r=>r.json()).then(res=>{ alert(res.message); load(); }); }
+    function toggleBlock(p){ fetch('/api/admin/user-action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({phone: p, action: 'toggleBlock'}) }).then(r=>r.json()).then(res=>{ alert(res.message); load(); }); }
+    function chPass(p){ let np = prompt('New pass:'); if(np){ fetch('/api/admin/user-action', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({phone: p, action: 'changePass', newPassword: np}) }).then(r=>r.json()).then(res=>{ alert('Pass changed!'); load(); }); } }
+    function ap(t, id){ fetch('/api/admin/approve', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({type: t, id: id}) }).then(r=>r.json()).then(res=>{ alert('Approved!'); load(); }); }
+    function setNum(n){ fetch('/api/admin/control', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nextNum: n}) }).then(r=>r.json()).then(res=>{ alert('Set: ' + n); }); }
+    function setBs(bs){ fetch('/api/admin/control', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({nextBs: bs}) }).then(r=>r.json()).then(res=>{ alert('Set: ' + bs); }); }
+    function saveNotice(){ fetch('/api/admin/notice', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({notice: document.getElementById('noticeInp').value}) }).then(r=>r.json()).then(res=>{ alert('Notice sent!'); }); }
+    function saveSettings(){ fetch('/api/admin/settings', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({telegram: document.getElementById('tgInp').value, qrCode: document.getElementById('qrInp').value}) }).then(r=>r.json()).then(res=>{ alert('Saved!'); }); }
 
-    function chPass(p){
-        let np = prompt('Enter new password for ' + p + ':');
-        if(np){
-            fetch('/api/admin/user-action', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({phone: p, action: 'changePass', newPassword: np})
-            }).then(r => r.json()).then(res => { alert('Password changed successfully!'); load(); });
-        }
-    }
-
-    function ap(t, id){
-        fetch('/api/admin/approve', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({type: t, id: id})
-        }).then(r => r.json()).then(res => { alert('Approved successfully!'); load(); });
-    }
-
-    function setNum(n){
-        fetch('/api/admin/control', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({nextNum: n})
-        }).then(r => r.json()).then(res => { alert('Next Number set to: ' + n); });
-    }
-
-    function setBs(bs){
-        fetch('/api/admin/control', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({nextBs: bs})
-        }).then(r => r.json()).then(res => { alert('Next Big/Small set to: ' + bs); });
-    }
-
-    function saveNotice(){
-        let n = document.getElementById('noticeInp').value;
-        fetch('/api/admin/notice', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({notice: n})
-        }).then(r => r.json()).then(res => { alert('Notice broadcasted successfully!'); });
-    }
-
-    function saveSettings(){
-        let tg = document.getElementById('tgInp').value;
-        let qr = document.getElementById('qrInp').value;
-        fetch('/api/admin/settings', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({telegram: tg, qrCode: qr})
-        }).then(r => r.json()).then(res => { alert('Settings updated successfully!'); });
-    }
-
-    setInterval(load, 1500);
+    setInterval(load, 2500);
     load();
     </script></body></html>`);
 });
 
 app.use(express.static(path.join(__dirname)));
+app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 
-app.get('*', (req, res) => {
-    let indexPath = path.join(__dirname, 'index.html');
-    if (fs.existsSync(indexPath)) res.sendFile(indexPath);
-    else res.send("Game index.html not found!");
-});
-
-
-// 24/7 Virtual Bots & Keep-Alive System to prevent server sleep and data reset
-const botPhones = ['9876543210', '9876543211', '9876543212', '9876543213', '9876543214', '9876543215', '9876543216', '9876543217', '9876543218', '9876543219'];
-botPhones.forEach(bp => {
-    if (!db.users[bp]) {
-        db.users[bp] = { phone: bp, password: 'bot', gameId: 'BOT' + Math.floor(1000+Math.random()*9000), balance: 50000, isBlocked: false };
-    }
-});
-
-setInterval(() => {
-    let randomBot = botPhones[Math.floor(Math.random() * botPhones.length)];
-    let choices = ['0','1','2','3','4','5','6','7','8','9','Big','Small','red','green','violet'];
-    let sel = choices[Math.floor(Math.random() * choices.length)];
-    let amt = [10, 20, 50, 100][Math.floor(Math.random() * 4)];
-    
-    db.bets.unshift({
-        id: Date.now() + Math.random(),
-        phone: randomBot,
-        select: sel,
-        amount: amt,
-        quantity: 1,
-        totalAmount: amt,
-        period: db.currentPeriod,
-        status: 'Pending'
-    });
-    if(db.bets.length > 100) db.bets.pop();
-    saveData();
-}, 5000);
-        
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log('Server live on port ' + PORT);
-});
+server.listen(PORT, '0.0.0.0', () => { console.log('Live on ' + PORT); });

@@ -34,32 +34,46 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
+// Original Admin Routing & Login Handling
 app.get('/admin', (req, res) => {
-    let files = fs.readdirSync(__dirname);
-    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
+    let adminPath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminPath)) {
+        return res.sendFile(adminPath);
     }
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Universal Success Auth for Frontend compatibility
+app.post('/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    let adminPath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminPath)) {
+        return res.sendFile(adminPath);
+    }
+    res.redirect('/admin');
+});
+
+// Original Game Registration & Login APIs
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
+    if (db.users[phone]) {
+        return res.json({ success: false, message: "User already registered!" });
+    }
     db.users[phone] = { phone, password, balance: 100 };
     saveDB();
-    res.json({ code: 0, status: 200, success: true, message: "Success", token: "mock-token-123", user: db.users[phone] });
+    res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
 });
 
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
     if (!db.users[phone]) {
-        db.users[phone] = { phone, password, balance: 100 };
+        return res.json({ success: false, message: "User not found! Please register first." });
     }
-    saveDB();
-    res.json({ code: 0, status: 200, success: true, message: "Success", token: "mock-token-123", user: db.users[phone] });
+    if (db.users[phone].password !== password) {
+        return res.json({ success: false, message: "Incorrect password!" });
+    }
+    res.json({ success: true, message: "Login successful!", user: db.users[phone] });
 });
 
 app.get('/api/game-state', (req, res) => {
@@ -74,7 +88,6 @@ app.get('/api/game-state', (req, res) => {
 app.post('/api/bet', (req, res) => {
     const { phone, amount, choice, period } = req.body;
     if (!db.bets) db.bets = [];
-    db.bets.pop(); // prevent overflow
     db.bets.push({ phone, amount, choice, period, time: new Date() });
     saveDB();
     res.json({ success: true, message: "Bet placed successfully!" });

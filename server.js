@@ -389,3 +389,21 @@ app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); }
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, '0.0.0.0', () => { console.log('Live on ' + PORT); });
+
+
+// Game Engine Sync Fix
+if (!global.gameTimerStarted) {
+    global.gameTimerStarted = true;
+    setInterval(() => {
+        let now = new Date();
+        let seconds = 30 - (now.getSeconds() % 30);
+        let periodStr = now.getFullYear().toString() +
+            (now.getMonth() + 1).toString().padStart(2, '0') +
+            now.getDate().toString().padStart(2, '0') +
+            Math.floor((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 30).toString().padStart(5, '0');
+        
+        global.currentPeriod = periodStr;
+        global.timerSeconds = seconds;
+    }, 1000);
+}
+    

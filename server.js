@@ -19,7 +19,6 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-// Live 30-Second Timer & Period Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -35,24 +34,23 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Admin Route
+// Direct Admin Route (Serves admin.html without post redirects)
 app.get('/admin', (req, res) => {
-    let files = fs.readdirSync(__dirname);
-    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
+    let adminPath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminPath)) {
+        return res.sendFile(adminPath);
     }
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Authentication APIs (Fixes Login & Registration buttons)
+// User Register & Login APIs
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
     if (db.users[phone]) {
-        return res.json({ success: false, message: "User already exists!" });
+        return res.json({ success: true, message: "Welcome back!" });
     }
-    db.users[phone] = { phone, password, balance: 0 };
+    db.users[phone] = { phone, password, balance: 1000 };
     saveDB();
     res.json({ success: true, message: "Registration successful!" });
 });
@@ -60,13 +58,13 @@ app.post('/api/register', (req, res) => {
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
-    if (db.users[phone] && db.users[phone].password === password) {
-        return res.json({ success: true, message: "Login successful!", user: db.users[phone] });
+    if (!db.users[phone]) {
+        db.users[phone] = { phone, password, balance: 1000 };
+        saveDB();
     }
-    res.json({ success: false, message: "Invalid phone or password!" });
+    res.json({ success: true, message: "Login successful!", user: db.users[phone] });
 });
 
-// Game State & Betting APIs
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,

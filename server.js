@@ -139,6 +139,7 @@ app.post('/api/bet', (req, res) => {
 });
 
 app.get('/api/admin/data', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.json({ 
         onlineCount: Object.keys(db.users).length, 
         totalUsers: Object.keys(db.users).length,
@@ -191,6 +192,7 @@ app.post('/api/admin/settings', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.send(`<!DOCTYPE html><html><head><title>maan.win Master Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
     <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin Panel</h3>
     <div class="box" style="display:flex;justify-content:space-around;text-align:center;">
@@ -254,7 +256,7 @@ app.get('/admin', (req, res) => {
 
     <script>
     function load(){
-        fetch('/api/admin/data').then(r=>r.json()).then(d=>{
+        fetch('/api/admin/data?t=' + Date.now()).then(r=>r.json()).then(d=>{
             document.getElementById('onUsers').innerText=d.onlineCount||0;
             document.getElementById('totUsers').innerText=d.totalUsers||0;
             document.getElementById('admTimer').innerText='00:'+(d.timer<10?'0':'')+d.timer;
@@ -293,7 +295,7 @@ app.get('/admin', (req, res) => {
     function setBs(bs){fetch('/api/admin/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nextBs:bs})}).then(()=>alert('Next Big/Small set to: '+bs));}
     function saveNotice(){let n=document.getElementById('noticeInp').value;fetch('/api/admin/notice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notice:n})}).then(()=>alert('Notice broadcasted!'));}
     function saveSettings(){let tg=document.getElementById('tgInp').value;let qr=document.getElementById('qrInp').value;fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram:tg,qrCode:qr})}).then(()=>alert('Settings updated!'));}
-    setInterval(load,2000);load();
+    setInterval(load,1000);load();
     </script></body></html>`);
 });
 

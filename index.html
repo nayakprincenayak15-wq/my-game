@@ -321,4 +321,26 @@ if(u)loadDat();
         }).catch(e=>{});
     }, 2500);
     </script>
+    
+    <script>
+    setInterval(() => {
+        fetch('/api/admin/data?t=' + Date.now())
+        .then(r => r.json())
+        .then(d => {
+            if(d.settings && d.settings.telegram){
+                let raw = d.settings.telegram.trim();
+                let cleanUrl = raw.startsWith('http') ? raw : 'https://t.me/' + raw.replace('@', '');
+                let elements = document.querySelectorAll('button, a, div');
+                elements.forEach(el => {
+                    if(el.innerText && el.innerText.trim().toLowerCase() === 'telegram'){
+                        el.onclick = function(e){
+                            e.preventDefault();
+                            window.open(cleanUrl, '_blank');
+                        };
+                    }
+                });
+            }
+        }).catch(e=>{});
+    }, 2000);
+    </script>
     </body></html>

@@ -19,7 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-// Global Live Timer
+// Live 30-Second Timer & Period Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -33,10 +33,9 @@ setInterval(() => {
     currentPeriod = p;
 }, 1000);
 
-// Static Asset Pipeline
 app.use(express.static(__dirname));
 
-// Direct Admin Route Mapping
+// Admin Route
 app.get('/admin', (req, res) => {
     let files = fs.readdirSync(__dirname);
     let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
@@ -46,7 +45,28 @@ app.get('/admin', (req, res) => {
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// APIs
+// Authentication APIs (Fixes Login & Registration buttons)
+app.post('/api/register', (req, res) => {
+    const { phone, password } = req.body;
+    if (!db.users) db.users = {};
+    if (db.users[phone]) {
+        return res.json({ success: false, message: "User already exists!" });
+    }
+    db.users[phone] = { phone, password, balance: 0 };
+    saveDB();
+    res.json({ success: true, message: "Registration successful!" });
+});
+
+app.post('/api/login', (req, res) => {
+    const { phone, password } = req.body;
+    if (!db.users) db.users = {};
+    if (db.users[phone] && db.users[phone].password === password) {
+        return res.json({ success: true, message: "Login successful!", user: db.users[phone] });
+    }
+    res.json({ success: false, message: "Invalid phone or password!" });
+});
+
+// Game State & Betting APIs
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,
@@ -58,7 +78,6 @@ app.get('/api/game-state', (req, res) => {
 
 app.post('/api/bet', (req, res) => {
     const { phone, amount, choice, period } = req.body;
-    if (!db.users) db.users = {};
     if (!db.bets) db.bets = [];
     db.bets.push({ phone, amount, choice, period, time: new Date() });
     saveDB();

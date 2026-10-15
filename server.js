@@ -18,18 +18,11 @@ let db = {
     withdrawals: [] 
 };
 
-if (fs.existsSync(DB_PATH)) {
-    try { 
-        let loaded = JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); 
-        db = { ...db, ...loaded };
-    } catch(e){}
-}
-
 function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-let currentPeriod = "20261015054262";
+let currentPeriod = "20261015060001";
 let timerSeconds = 30;
 
 setInterval(() => {
@@ -42,7 +35,7 @@ setInterval(() => {
     currentPeriod = p;
 }, 1000);
 
-// Complete Embedded Game & Login UI
+// Game Frontend UI
 const gameHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,7 +44,7 @@ const gameHTML = `<!DOCTYPE html>
     <title>maan.win</title>
     <style>
         body { background-color: #0b1329; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; }
-        .container { max-width: 400px; margin: auto; padding-top: 30px; }
+        .container { max-width: 400px; margin: auto; padding-top: 20px; }
         .logo { text-align: center; font-size: 28px; font-weight: bold; color: #f59e0b; margin-bottom: 20px; }
         .card { background-color: #131d38; border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #1e2d54; }
         input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #2a3c68; background-color: #0b1329; color: #fff; box-sizing: border-box; margin-bottom: 15px; }
@@ -66,7 +59,6 @@ const gameHTML = `<!DOCTYPE html>
     <div class="container">
         <div class="logo">maan.win</div>
         
-        <!-- Login / Register Section -->
         <div id="auth-card" class="card">
             <h3>Login / Register</h3>
             <input type="text" id="phone" placeholder="Enter Phone Number">
@@ -75,7 +67,6 @@ const gameHTML = `<!DOCTYPE html>
             <button class="btn btn-blue" onclick="handleAuth('/api/register')">Register Now</button>
         </div>
 
-        <!-- Game Dashboard Section -->
         <div id="game-card" class="card hidden">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>Balance: <span id="user-bal" style="color:#10b981; font-weight:bold;">₹100</span></div>
@@ -156,16 +147,19 @@ app.get('/', (req, res) => {
     res.send(gameHTML);
 });
 
-// Admin Panel Route
+// Master Admin Panel UI
 const masterAdminHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>maan.win Master Admin</title>
+    <title>maan.win Master Admin Panel</title>
     <style>
         body { background: #0b1329; color: #fff; font-family: sans-serif; padding: 20px; }
         h1 { color: #f59e0b; text-align: center; }
         .card { background: #131d38; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: center; padding: 8px; border-bottom: 1px solid #1e2d54; }
+        th { color: #f59e0b; }
     </style>
 </head>
 <body>
@@ -173,9 +167,21 @@ const masterAdminHTML = `<!DOCTYPE html>
     <div class="card">
         <h3>Total Registered Users: <span id="u-count">0</span></h3>
     </div>
+    <div class="card">
+        <h3>Users List</h3>
+        <table>
+            <thead><tr><th>Phone</th><th>Balance</th></tr></thead>
+            <tbody id="tb-users"></tbody>
+        </table>
+    </div>
     <script>
         fetch('/api/admin/data').then(r=>r.json()).then(d=>{
             document.getElementById('u-count').innerText = Object.keys(d.users||{}).length;
+            let rows = '';
+            for(let p in d.users) {
+                rows += '<tr><td>' + p + '</td><td>₹' + (d.users[p].balance || 100) + '</td></tr>';
+            }
+            document.getElementById('tb-users').innerHTML = rows || '<tr><td colspan="2">No Users Yet</td></tr>';
         });
     </script>
 </body>
@@ -192,7 +198,7 @@ app.post('/admin/login', (req, res) => {
 // APIs
 app.post(['/api/register', '/register', '/api/login', '/login'], (req, res) => {
     const { phone, password } = req.body;
-    if (!phone) return res.json({ success: false, message: "Phone required" });
+    if (!phone) return res.json({ success: false, message: "Phone number required" });
     if (!db.users) db.users = {};
     if (!db.users[phone]) {
         db.users[phone] = { phone, password: password || "123456", balance: 100 };

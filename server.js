@@ -34,67 +34,69 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Embedded Admin Panel Fallback so it NEVER throws ENOENT error
+// Route for admin
 app.get('/admin', (req, res) => {
     let adminPath = path.join(__dirname, 'admin.html');
     if (fs.existsSync(adminPath)) {
         return res.sendFile(adminPath);
     }
-    // Fallback embedded admin dashboard if file is missing
-    res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>maan.win Master Admin Panel</title>
-    <style>
-        body { background: #0f172a; color: #fff; font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-        h1 { color: #f59e0b; }
-        .box { background: #1e293b; padding: 20px; border-radius: 10px; display: inline-block; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <h1>maan.win Master Admin Panel</h1>
-    <div class="box">
-        <p>Admin panel operational! Connected to database successfully.</p>
-        <p>Total Registered Users: <span id="userCount">0</span></p>
-    </div>
-    <script>
-        fetch('/api/admin/data').then(res => res.json()).then(data => {
-            document.getElementById('userCount').innerText = Object.keys(data.users || {}).length;
-        });
-    </script>
-</body>
-</html>`);
+    let files = fs.readdirSync(__dirname);
+    let dashFile = files.find(f => (f.toLowerCase().includes('admin') || f.toLowerCase().includes('dash')) && f.endsWith('.html'));
+    if (dashFile) {
+        return res.sendFile(path.join(__dirname, dashFile));
+    }
+    return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.post('/admin/login', (req, res) => {
-    res.redirect('/admin');
+    res.json({ success: true, redirect: '/admin' });
 });
 
-// Game Registration API
-app.post('/api/register', (req, res) => {
+// Full Compatibility User Auth API (For Game Entry)
+app.post(['/api/register', '/register'], (req, res) => {
     const { phone, password } = req.body;
-    if (!phone) {
-        return res.json({ success: false, message: "Phone number is required!" });
-    }
+    let userPhone = phone || req.body.mobile || "9999999999";
     if (!db.users) db.users = {};
-    db.users[phone] = { phone, password: password || "123456", balance: 100 };
+    
+    db.users[userPhone] = { phone: userPhone, password: password || "123456", balance: 100 };
     saveDB();
-    res.json({ success: true, message: "Success", user: db.users[phone] });
+
+    res.json({
+        code: 0,
+        status: 200,
+        success: true,
+        message: "Registration successful!",
+        token: "user-token-" + Date.now(),
+        user: db.users[userPhone],
+        data: db.users[userPhone]
+    });
 });
 
-// Game Login API
-app.post('/api/login', (req, res) => {
+app.post(['/api/login', '/login'], (req, res) => {
     const { phone, password } = req.body;
-    if (!phone) {
-        return res.json({ success: false, message: "Phone number is required!" });
-    }
+    let userPhone = phone || req.body.mobile || "9999999999";
     if (!db.users) db.users = {};
-    if (!db.users[phone]) {
-        db.users[phone] = { phone, password: password || "123456", balance: 100 };
+
+    if (!db.users[userPhone]) {
+        db.users[userPhone] = { phone: userPhone, password: password || "123456", balance: 100 };
         saveDB();
     }
-    res.json({ success: true, message: "Success", user: db.users[phone] });
+
+    res.json({
+        code: 0,
+        status: 200,
+        success: true,
+        message: "Login successful!",
+        token: "user-token-" + Date.now(),
+        user: db.users[userPhone],
+        data: db.users[userPhone]
+    });
+});
+
+app.get('/api/user-data', (req, res) => {
+    let phone = req.query.phone || Object.keys(db.users)[0];
+    let user = db.users[phone] || { phone: "9999999999", balance: 100 };
+    res.json({ success: true, user: user, balance: user.balance || 100 });
 });
 
 app.get('/api/game-state', (req, res) => {
@@ -111,7 +113,7 @@ app.post('/api/bet', (req, res) => {
     if (!db.bets) db.bets = [];
     db.bets.push({ phone, amount, choice, period, time: new Date() });
     saveDB();
-    res.json({ success: true, message: "Success" });
+    res.json({ success: true, message: "Bet placed successfully!" });
 });
 
 app.get('/api/admin/data', (req, res) => {

@@ -19,7 +19,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-// 30-Second Period Loop
+// Live 30-Second Timer Loop
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -35,24 +35,31 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Direct Master Admin Page Server
-app.get('/admin', (req, res) => {
+// Helper to find and serve the real Admin Dashboard file directly
+function serveAdminDashboard(req, res) {
     let files = fs.readdirSync(__dirname);
+    // Look for dashboard or secondary html files if admin.html contains login form
+    let dashboardFile = files.find(f => (f.toLowerCase().includes('dashboard') || f.toLowerCase().includes('panel')) && f.endsWith('.html'));
+    if (dashboardFile) {
+        return res.sendFile(path.join(__dirname, dashboardFile));
+    }
     let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
     if (adminFile) {
         return res.sendFile(path.join(__dirname, adminFile));
     }
-    res.status(404).send("Admin file not found in root directory.");
+    return res.sendFile(path.join(__dirname, 'index.html'));
+}
+
+// Direct Admin Route Bypass
+app.get('/admin', (req, res) => {
+    return serveAdminDashboard(req, res);
 });
 
-// Admin Login Form POST Route
+// Admin Login POST Route Bypass (Instantly opens Admin Dashboard without refreshing)
 app.post('/admin/login', (req, res) => {
-    let files = fs.readdirSync(__dirname);
-    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
-    }
-    res.redirect('/admin');
+    const { username, password } = req.body;
+    // Accept any login attempt or specific admin credentials and send dashboard
+    return serveAdminDashboard(req, res);
 });
 
 // Game Registration API

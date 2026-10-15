@@ -21,6 +21,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
+// Live Timer & Period Generator
 let currentPeriod = "";
 let timerSeconds = 30;
 
@@ -36,6 +37,7 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
+// Game State API for Frontend
 app.get('/api/game-state', (req, res) => {
     res.json({
         period: currentPeriod,
@@ -45,11 +47,24 @@ app.get('/api/game-state', (req, res) => {
     });
 });
 
+// Bet Placement API (Restores betting popup & action)
+app.post('/api/bet', (req, res) => {
+    const { phone, amount, choice, period } = req.body;
+    if (!db.users) db.users = {};
+    if (!db.bets) db.bets = [];
+    
+    db.bets.push({ phone, amount, choice, period, time: new Date() });
+    saveDB();
+    res.json({ success: true, message: "Bet placed successfully!" });
+});
+
+// Admin Data API
 app.get('/api/admin/data', (req, res) => {
     res.json({
         settings: db.settings || { telegram: '@Rajbr818' },
         users: db.users || {},
-        history: db.history || []
+        history: db.history || [],
+        bets: db.bets || []
     });
 });
 

@@ -1,3 +1,4 @@
+const cookieParser = require('cookie-parser');
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -5,6 +6,7 @@ const fs = require('fs');
 const { Server } = require('socket.io');
 
 const app = express();
+app.use(cookieParser());
 const server = http.createServer(app);
 const io = new Server(server);
 
@@ -274,73 +276,49 @@ function checkAdminAuth(req, res, next) {
     return res.status(401).send('Invalid credentials.');
 }
     
-app.get('/admin', checkAdminAuth, (req, res) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.send(`<!DOCTYPE html><html><head><title>maan.win Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.btn-r{background:#da3633;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
-    <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin</h3>
-    <div class="box" style="display:flex;justify-content:space-around;text-align:center;">
-        <div><b>Online:</b><br><span id="onUsers" style="color:#00e676;font-size:16px;">0</span></div>
-        <div><b>Total Reg:</b><br><span id="totUsers" style="color:#58a6ff;font-size:16px;">0</span></div>
-        <div><b>Timer:</b><br><span id="admTimer" style="color:#ffa000;font-size:16px;">--</span></div>
-    </div>
-    <div class="box">
-        <h3>🔍 User History Search Box</h3>
-        <input type="text" id="searchPhoneInp" class="inp" placeholder="Enter 10-digit phone number...">
-        <button class="btn" style="width:100%;background:#1f6feb;" onclick="searchUserHistory()">Search User History</button>
-        <div id="searchResultBox" style="margin-top:8px;font-size:10px;"></div>
-    </div>
-    <div class="box">
-        <h3>🎯 Result Control</h3>
-        <div class="grid">
-            <button class="btn btn-c" onclick="setNum(0)">0</button><button class="btn btn-c" onclick="setNum(1)">1</button><button class="btn btn-c" onclick="setNum(2)">2</button><button class="btn btn-c" onclick="setNum(3)">3</button><button class="btn btn-c" onclick="setNum(4)">4</button>
-            <button class="btn btn-c" onclick="setNum(5)">5</button><button class="btn btn-c" onclick="setNum(6)">6</button><button class="btn btn-c" onclick="setNum(7)">7</button><button class="btn btn-c" onclick="setNum(8)">8</button><button class="btn btn-c" onclick="setNum(9)">9</button>
-        </div>
-        <div style="display:flex;gap:4px;margin-top:6px;">
-            <button class="btn" style="background:#ff9800;flex:1;" onclick="setBs('Big')">Big</button>
-            <button class="btn" style="background:#2196f3;flex:1;" onclick="setBs('Small')">Small</button>
-        </div>
-        <div style="font-size:10px;margin:8px 0 4px 0;color:#8b949e;">Colors (Green / Violet / Red):</div>
-        <div style="display:flex;gap:4px;">
-            <button class="btn" style="background:#4caf50;flex:1;" onclick="setCol('green')">Green</button>
-            <button class="btn" style="background:#9c27b0;flex:1;" onclick="setCol('violet')">Violet</button>
-            <button class="btn" style="background:#f44336;flex:1;" onclick="setCol('red')">Red</button>
-        </div>
-    </div>
-    <div class="box">
-        <h3>📢 Notice Manager</h3>
-        <input type="text" id="noticeInp" class="inp" placeholder="Enter notice...">
-        <button class="btn" style="width:100%;background:#238636;" onclick="saveNotice()">Broadcast</button>
-    </div>
-    <div class="box">
-        <h3>⚙️ Settings & Telegram Link</h3>
-        <input type="text" id="tgInp" class="inp" placeholder="Telegram Link">
-        <input type="text" id="qrInp" class="inp" placeholder="Deposit QR URL">
-        <button class="btn" style="width:100%;background:#238636;" onclick="saveSettings()">Save</button>
-    </div>
-    <div class="box"><h3>👥 Referrals</h3><table id="reft"></table></div>
-    <div class="box"><h3>👤 Users</h3><table id="ut"></table></div>
-    <div class="box"><h3>💰 Deposits</h3><table id="dt"></table></div>
-    <div class="box"><h3>💸 Withdrawals</h3><table id="wt"></table></div>
-    <div class="box"><h3>🎮 Live Bets</h3><table id="bt"></table></div>
 
-    <script>
-    let globalData = {};
-    function load(){
-        fetch('/api/admin/data?t=' + Date.now()).then(r => r.json()).then(d => {
-            globalData = d;
-            document.getElementById('onUsers').innerText = d.onlineCount || 0;
-            document.getElementById('totUsers').innerText = d.totalUsers || 0;
-            document.getElementById('admTimer').innerText = '00:' + (d.timer < 10 ? '0' : '') + d.timer;
-            if(d.settings){
-                if(document.activeElement !== document.getElementById('tgInp')) document.getElementById('tgInp').value = d.settings.telegram || '';
-                if(document.activeElement !== document.getElementById('qrInp')) document.getElementById('qrInp').value = d.settings.qrCode || '';
-                if(document.activeElement !== document.getElementById('noticeInp')) document.getElementById('noticeInp').value = d.settings.announcement || '';
-            }
-            let reft = '<tr><th>Referrer</th><th>Referred</th><th>Deposit</th><th>Action</th></tr>';
-            (d.referrals||[]).forEach(r => {
-                let btn = r.bonusPaid === 0 ? '<button class="btn" onclick="giveBonus('+r.id+')">Give 10%</button>' : 'Paid';
-                reft += '<tr><td>'+r.referrer+'</td><td>'+r.referred+'</td><td>₹'+r.depositAmount+'</td><td>'+btn+'</td></tr>';
-            });
+app.get('/admin', (req, res) => {
+    if (req.cookies && req.cookies.admin_logged === 'true') {
+        return res.sendFile(path.join(__dirname, 'index.html'));
+    }
+    res.send(`<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Admin Login - maan.win</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body { background: #0d1117; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .box { background: #161b22; padding: 25px; border-radius: 10px; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); border: 1px solid #30363d; }
+            h2 { text-align: center; color: #58a6ff; margin-bottom: 20px; }
+            input { width: 100%; padding: 12px; margin: 8px 0 15px 0; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+            button { width: 100%; padding: 12px; background: #238636; border: none; color: #fff; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 15px; }
+            button:hover { background: #2ea043; }
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h2>Admin Login</h2>
+            <form method="POST" action="/admin/login">
+                <label style="font-size: 13px; color: #8b949e;">Username</label>
+                <input type="text" name="user" required placeholder="Enter username">
+                <label style="font-size: 13px; color: #8b949e;">Password</label>
+                <input type="password" name="pass" required placeholder="Enter password">
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </body>
+    </html>`);
+});
+
+app.post('/admin/login', express.urlencoded({ extended: true }), (req, res) => {
+    const { user, pass } = req.body;
+    if (user === 'Prince' && pass === '6396714538') {
+        res.cookie('admin_logged', 'true', { maxAge: 86400000, httpOnly: true });
+        return res.redirect('/admin');
+    }
+    res.send(`<script>alert('Galat Username ya Password hai!'); window.location='/admin';</script>`);
+});
+    
             document.getElementById('reft').innerHTML = reft || '<tr><td colspan="4">No data</td></tr>';
 
             let ut = '<tr><th>Phone</th><th>Balance</th><th>Status</th><th>Block</th><th>Pass</th></tr>';

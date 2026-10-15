@@ -239,8 +239,8 @@ app.get('/admin', (req, res) => {
     <script>
     function load(){
         fetch('/api/admin/data').then(r=>r.json()).then(d=>{
-            document.getElementById('onUsers').innerText=d.onlineCount;
-            document.getElementById('totUsers').innerText=d.totalUsers;
+            document.getElementById('onUsers').innerText=d.onlineCount||0;
+            document.getElementById('totUsers').innerText=d.totalUsers||0;
             document.getElementById('admTimer').innerText='00:'+(d.timer<10?'0':'')+d.timer;
             if(d.settings){
                 if(document.activeElement!==document.getElementById('tgInp')) document.getElementById('tgInp').value=d.settings.telegram||'';
@@ -248,24 +248,36 @@ app.get('/admin', (req, res) => {
                 if(document.activeElement!==document.getElementById('noticeInp')) document.getElementById('noticeInp').value=d.settings.announcement||'';
             }
             let dt='<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Status</th><th>Action</th></tr>';
-            d.deposits.forEach(x=>{dt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'deposit\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+            if(d.deposits && d.deposits.length > 0){
+                d.deposits.forEach(x=>{dt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'deposit\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+            } else {
+                dt+='<tr><td colspan="5">No deposit requests</td></tr>';
+            }
             document.getElementById('dt').innerHTML=dt;
 
             let wt='<tr><th>Phone</th><th>Amt</th><th>Bank Details</th><th>Status</th><th>Action</th></tr>';
-            d.withdrawals.forEach(x=>{let b=x.bankDetails?x.bankDetails.accNo+' ('+x.bankDetails.bankName+')':'--';wt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'withdraw\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+            if(d.withdrawals && d.withdrawals.length > 0){
+                d.withdrawals.forEach(x=>{let b=x.bankDetails?x.bankDetails.accNo+' ('+x.bankDetails.bankName+')':'--';wt+='<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\'withdraw\','+x.id+')">Approve</button>':'Done')+'</td></tr>'});
+            } else {
+                wt+='<tr><td colspan="5">No withdrawal requests</td></tr>';
+            }
             document.getElementById('wt').innerHTML=wt;
 
             let bt='<tr><th>Phone</th><th>Period</th><th>Selection</th><th>Total</th><th>Status</th></tr>';
-            d.bets.forEach(x=>{let sc=x.status==='Win'?'#00e676':x.status==='Loss'?'#f44336':'#ffa000';bt+='<tr><td>'+x.phone+'</td><td>'+x.period+'</td><td>'+x.select+'</td><td>₹'+x.totalAmount+'</td><td style="color:'+sc+';font-weight:bold;">'+x.status+'</td></tr>'});
+            if(d.bets && d.bets.length > 0){
+                d.bets.forEach(x=>{let sc=x.status==='Win'?'#00e676':x.status==='Loss'?'#f44336':'#ffa000';bt+='<tr><td>'+x.phone+'</td><td>'+x.period+'</td><td>'+x.select+'</td><td>₹'+x.totalAmount+'</td><td style="color:'+sc+';font-weight:bold;">'+x.status+'</td></tr>'});
+            } else {
+                bt+='<tr><td colspan="5">No bets placed yet</td></tr>';
+            }
             document.getElementById('bt').innerHTML=bt;
-        });
+        }).catch(e=>console.log(e));
     }
     function ap(t,id){fetch('/api/admin/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:t,id})}).then(()=>load());}
     function setNum(n){fetch('/api/admin/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nextNum:n})}).then(()=>alert('Next Number set to: '+n));}
     function setBs(bs){fetch('/api/admin/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nextBs:bs})}).then(()=>alert('Next Big/Small set to: '+bs));}
     function saveNotice(){let n=document.getElementById('noticeInp').value;fetch('/api/admin/notice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({notice:n})}).then(()=>alert('Notice broadcasted!'));}
     function saveSettings(){let tg=document.getElementById('tgInp').value;let qr=document.getElementById('qrInp').value;fetch('/api/admin/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({telegram:tg,qrCode:qr})}).then(()=>alert('Settings updated!'));}
-    setInterval(load,3000);load();
+    setInterval(load,2000);load();
     </script></body></html>`);
 });
 

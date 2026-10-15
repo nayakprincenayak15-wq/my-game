@@ -35,12 +35,7 @@ setInterval(() => {
 app.use(express.static(__dirname));
 
 app.get('/admin', (req, res) => {
-    let files = fs.readdirSync(__dirname);
-    let adminFile = files.find(f => f.toLowerCase().includes('admin') && f.endsWith('.html'));
-    if (adminFile) {
-        return res.sendFile(path.join(__dirname, adminFile));
-    }
-    return res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 app.get('/api/game-state', (req, res) => {

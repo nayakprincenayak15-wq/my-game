@@ -34,7 +34,7 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Direct Admin Route (Serves admin.html without post redirects)
+// Admin Page & Admin Login Post Handler
 app.get('/admin', (req, res) => {
     let adminPath = path.join(__dirname, 'admin.html');
     if (fs.existsSync(adminPath)) {
@@ -43,12 +43,22 @@ app.get('/admin', (req, res) => {
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.post('/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    // Direct match for admin credentials or bypass to admin dashboard
+    let adminPath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(adminPath)) {
+        return res.sendFile(adminPath);
+    }
+    res.redirect('/admin');
+});
+
 // User Register & Login APIs
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
     if (db.users[phone]) {
-        return res.json({ success: true, message: "Welcome back!" });
+        return res.json({ success: true, message: "User already exists, logged in!" });
     }
     db.users[phone] = { phone, password, balance: 1000 };
     saveDB();

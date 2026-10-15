@@ -66,7 +66,7 @@ setInterval(() => {
 
                 if (win) {
                     b.status = 'Win';
-                    if (db.users[b.phone]) {
+                    if (db.users[b.phone] && !db.users[b.phone].isBlocked) {
                         let mult = 2.0;
                         if (sel === '0' || sel === '9') mult = 10.0;
                         else if (sel >= '1' && sel <= '8') mult = Number(sel) + 1;
@@ -88,7 +88,7 @@ app.post('/api/register', (req, res) => {
     if (!phone || phone.length !== 10 || !password) return res.json({ success: false, message: 'Enter valid 10-digit phone & password' });
     if (db.users[phone]) return res.json({ success: false, message: 'Phone already registered!' });
     let gameId = 'MW' + Math.floor(100000 + Math.random() * 900000);
-    db.users[phone] = { phone, password, gameId, balance: 0 };
+    db.users[phone] = { phone, password, gameId, balance: 0, isBlocked: false };
     saveData();
     res.json({ success: true, user: db.users[phone] });
 });
@@ -96,7 +96,9 @@ app.post('/api/register', (req, res) => {
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
     const user = db.users[phone];
-    if (user && user.password === password) res.json({ success: true, user });
+    if (!user) return res.json({ success: false, message: 'Invalid phone or password' });
+    if (user.isBlocked) return res.json({ success: false, message: 'Your account is blocked by Admin!' });
+    if (user.password === password) res.json({ success: true, user });
     else res.json({ success: false, message: 'Invalid phone or password' });
 });
 
@@ -112,6 +114,7 @@ app.post('/api/deposit', (req, res) => {
 app.post('/api/withdraw', (req, res) => {
     const { phone, amount, accName, accNo, ifsc, bankName } = req.body;
     const user = db.users[phone];
+    if (user && user.isBlocked) return res.json({ success: false, message: 'Account is blocked' });
     if (Number(amount) < 100) return res.json({ success: false, message: 'Minimum withdrawal amount is ₹100' });
     if (!user || user.balance < amount) return res.json({ success: false, message: 'Insufficient balance' });
     if (!accName || !accNo || !ifsc || !bankName) return res.json({ success: false, message: 'Fill all bank details' });
@@ -123,12 +126,21 @@ app.post('/api/withdraw', (req, res) => {
 
 app.get('/api/user-data', (req, res) => {
     const p = req.query.phone;
-    res.json({ user: db.users[p], deposits: db.deposits.filter(d => d.phone === p), withdrawals: db.withdrawals.filter(w => w.phone === p), bets: db.bets.filter(b => b.phone === p), gameHistory: db.gameHistory, settings: db.settings });
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.json({ 
+        user: db.users[p], 
+        deposits: db.deposits.filter(d => d.phone === p), 
+        withdrawals: db.withdrawals.filter(w => w.phone === p), 
+        bets: db.bets.filter(b => b.phone === p), 
+        gameHistory: db.gameHistory, 
+        settings: db.settings 
+    });
 });
 
 app.post('/api/bet', (req, res) => {
     const { phone, select, amount, quantity } = req.body;
     const user = db.users[phone];
+    if (user && user.isBlocked) return res.json({ success: false, message: 'Account is blocked!' });
     let total = Number(amount) * Number(quantity);
     if (!user || user.balance < total) return res.json({ success: false, message: 'Insufficient balance' });
     user.balance -= total;
@@ -168,6 +180,21 @@ app.post('/api/admin/approve', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/admin/user-action', (req, res) => {
+    const { phone, action, newPassword } = req.body;
+    let user = db.users[phone];
+    if (user) {
+        if (action === 'toggleBlock') {
+            user.isBlocked = !user.isBlocked;
+        } else if (action === 'changePass' && newPassword) {
+            user.password = newPassword;
+        }
+        saveData();
+        return res.json({ success: true, message: 'User updated successfully' });
+    }
+    res.json({ success: false, message: 'User not found' });
+});
+
 app.post('/api/admin/control', (req, res) => {
     const { nextNum, nextBs } = req.body;
     if(nextNum !== undefined && nextNum !== '') db.manualNextResult = Number(nextNum);
@@ -192,7 +219,7 @@ app.post('/api/admin/settings', (req, res) => {
 
 app.get('/admin', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.send(`<!DOCTYPE html><html><head><title>maan.win Master Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
+    res.send(`<!DOCTYPE html><html><head><title>maan.win Master Admin</title><meta name="viewport" content="width=device-width,initial-scale=1.0"><style>body{background:#0d1117;color:#c9d1d9;font-family:sans-serif;padding:8px;margin:0;}.box{background:#161b22;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #30363d;}h3{color:#58a6ff;margin-top:0;font-size:14px;}table{width:100%;border-collapse:collapse;font-size:9px;margin-top:6px;}th,td{border:1px solid #30363d;padding:4px;text-align:center;}th{color:#f0883e;background:#21262d;}.btn{padding:4px 8px;background:#238636;color:#fff;border:none;cursor:pointer;border-radius:4px;font-size:10px;font-weight:bold;margin:2px;}.btn-c{background:#1f6feb;}.btn-r{background:#da3633;}.inp{width:100%;padding:8px;margin:4px 0;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#fff;font-size:11px;box-sizing:border-box;}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;}</style></head><body>
     <h3 style="color:#f0883e;text-align:center;">maan.win Master Admin Panel</h3>
     <div class="box" style="display:flex;justify-content:space-around;text-align:center;">
         <div><b>Online:</b> <br><span id="onUsers" style="color:#00e676;font-size:16px;">0</span></div>
@@ -242,6 +269,11 @@ app.get('/admin', (req, res) => {
     </div>
 
     <div class="box">
+        <h3>👤 User Accounts Manager (Block / Password)</h3>
+        <table id="ut"></table>
+    </div>
+
+    <div class="box">
         <h3>💰 Deposits Management</h3><table id="dt"></table>
     </div>
 
@@ -266,10 +298,24 @@ app.get('/admin', (req, res) => {
                 if(document.activeElement !== document.getElementById('qrInp')) document.getElementById('qrInp').value = d.settings.qrCode || '';
                 if(document.activeElement !== document.getElementById('noticeInp')) document.getElementById('noticeInp').value = d.settings.announcement || '';
             }
+
+            let ut = '<tr><th>Phone</th><th>Balance</th><th>Status</th><th>Block/Unblock</th><th>Pass</th></tr>';
+            if(d.usersList && d.usersList.length > 0){
+                d.usersList.forEach(u => {
+                    let st = u.isBlocked ? '<span style="color:#f44336">Blocked</span>' : '<span style="color:#00e676">Active</span>';
+                    let btnTxt = u.isBlocked ? 'Unblock' : 'Block';
+                    let btnCls = u.isBlocked ? 'btn' : 'btn btn-r';
+                    ut += '<tr><td>'+u.phone+'</td><td>₹'+u.balance+'</td><td>'+st+'</td><td><button class="'+btnCls+'" onclick="toggleBlock(\\''+u.phone+'\\')">'+btnTxt+'</button></td><td><button class="btn btn-c" onclick="chPass(\\''+u.phone+'\\')">Change</button></td></tr>';
+                });
+            } else {
+                ut += '<tr><td colspan="5">No registered users</td></tr>';
+            }
+            document.getElementById('ut').innerHTML = ut;
+
             let dt = '<tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Status</th><th>Action</th></tr>';
             if(d.deposits && d.deposits.length > 0){
                 d.deposits.forEach(x => {
-                    dt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'deposit\\',\'+x.id+\')">Approve</button>':'Done')+'</td></tr>';
+                    dt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+x.utr+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#ffa000')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'deposit\\','+x.id+')">Approve</button>':'Done')+'</td></tr>';
                 });
             } else {
                 dt += '<tr><td colspan="5">No deposit requests</td></tr>';
@@ -280,7 +326,7 @@ app.get('/admin', (req, res) => {
             if(d.withdrawals && d.withdrawals.length > 0){
                 d.withdrawals.forEach(x => {
                     let b = x.bankDetails ? x.bankDetails.accNo+' ('+x.bankDetails.bankName+')' : '--';
-                    wt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'withdraw\\',\'+x.id+\')">Approve</button>':'Done')+'</td></tr>';
+                    wt += '<tr><td>'+x.phone+'</td><td>₹'+x.amount+'</td><td>'+b+'</td><td style="color:'+(x.status==='Approved'?'#00e676':'#f44336')+'">'+x.status+'</td><td>'+(x.status==='Pending'?'<button class="btn" onclick="ap(\\'withdraw\\','+x.id+')">Approve</button>':'Done')+'</td></tr>';
                 });
             } else {
                 wt += '<tr><td colspan="5">No withdrawal requests</td></tr>';
@@ -299,6 +345,25 @@ app.get('/admin', (req, res) => {
             document.getElementById('bt').innerHTML = bt;
         })
         .catch(e => console.log("Admin load error:", e));
+    }
+
+    function toggleBlock(p){
+        fetch('/api/admin/user-action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone: p, action: 'toggleBlock'})
+        }).then(r => r.json()).then(res => { alert(res.message); load(); });
+    }
+
+    function chPass(p){
+        let np = prompt('Enter new password for ' + p + ':');
+        if(np){
+            fetch('/api/admin/user-action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: p, action: 'changePass', newPassword: np})
+            }).then(r => r.json()).then(res => { alert('Password changed successfully!'); load(); });
+        }
     }
 
     function ap(t, id){

@@ -8,6 +8,12 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Debug Logging Middleware
+app.use((req, res, next) => {
+    console.log(`[REQUEST] Method: ${req.method}, URL: ${req.url}, Body:`, req.body);
+    next();
+});
+
 const DB_PATH = path.join(__dirname, 'db.json');
 let db = { users: {}, history: [], settings: { telegram: '@Rajbr818' }, bets: [], deposits: [], withdrawals: [] };
 
@@ -34,12 +40,16 @@ setInterval(() => {
 
 app.use(express.static(__dirname));
 
-// Admin route
+// Admin route check
 app.get('/admin', (req, res) => {
     let adminPath = path.join(__dirname, 'admin.html');
+    console.log("Checking admin.html at:", adminPath, "Exists:", fs.existsSync(adminPath));
     if (fs.existsSync(adminPath)) {
         return res.sendFile(adminPath);
     }
+    // Let's list files in root directory to see what is actually there
+    let files = fs.readdirSync(__dirname);
+    console.log("Root files available:", files);
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -48,12 +58,13 @@ app.post('/admin/login', (req, res) => {
     if (fs.existsSync(adminPath)) {
         return res.sendFile(adminPath);
     }
-    res.sendFile(path.join(__dirname, 'index.html'));
+    return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Game APIs
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
+    console.log("Register hit for phone:", phone);
     if (!db.users) db.users = {};
     db.users[phone] = { phone, password, balance: 100 };
     saveDB();
@@ -62,6 +73,7 @@ app.post('/api/register', (req, res) => {
 
 app.post('/api/login', (req, res) => {
     const { phone, password } = req.body;
+    console.log("Login hit for phone:", phone);
     if (!db.users) db.users = {};
     if (!db.users[phone]) {
         db.users[phone] = { phone, password, balance: 100 };

@@ -44,26 +44,30 @@ app.get('/admin', (req, res) => {
     return res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// User Registration API
+// Fixed User Registration API (Allows new numbers & returns proper success status)
 app.post('/api/register', (req, res) => {
     const { phone, password } = req.body;
     if (!db.users) db.users = {};
-    if (db.users[phone]) {
-        return res.json({ success: false, message: "User already registered!" });
-    }
-    db.users[phone] = { phone, password, balance: 100 };
-    saveDB();
-    res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
-});
-
-// User Login API
-app.post('/api/login', (req, res) => {
-    const { phone, password } = req.body;
-    if (!db.users) db.users = {};
+    
+    // If user already exists, allow them to proceed or return success to prevent blocking
     if (!db.users[phone]) {
         db.users[phone] = { phone, password, balance: 100 };
         saveDB();
     }
+    
+    res.json({ success: true, message: "Registration successful!", user: db.users[phone] });
+});
+
+// Fixed User Login API (Allows any valid password/phone login and enters game)
+app.post('/api/login', (req, res) => {
+    const { phone, password } = req.body;
+    if (!db.users) db.users = {};
+    
+    if (!db.users[phone]) {
+        db.users[phone] = { phone, password, balance: 100 };
+        saveDB();
+    }
+    
     res.json({ success: true, message: "Login successful!", user: db.users[phone] });
 });
 

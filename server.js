@@ -78,7 +78,8 @@ app.post('/api/register', (req, res) => {
     if (db.users[phone]) return res.json({ success: false, message: "Phone number already registered!" });
     
     let customId = "MW" + Math.floor(100000 + Math.random() * 900000);
-    db.users[phone] = { phone, password, balance: 100, customId, referredBy: referredBy || '' };
+    // Balance set to 0 (No free registration bonus)
+    db.users[phone] = { phone, password, balance: 0, customId, referredBy: referredBy || '', totalDeposit: 0, totalWagered: 0 };
     saveDB();
     res.json({ success: true, user: db.users[phone] });
 });
@@ -111,6 +112,11 @@ app.post('/api/bet', (req, res) => {
     const { phone, amount, choice, multiplier } = req.body;
     if (!db.users[phone] || db.users[phone].balance < amount) return res.json({ success: false, message: "Insufficient balance!" });
     db.users[phone].balance -= amount;
+    
+    // Track total wagered amount for withdrawal turnover rule
+    if (db.users[phone].totalWagered === undefined) db.users[phone].totalWagered = 0;
+    db.users[phone].totalWagered += Number(amount);
+
     if (!db.bets) db.bets = [];
     db.bets.push({ phone, amount, choice, multiplier, period: currentPeriod, status: 'Pending', time: new Date() });
     saveDB();
@@ -119,15 +125,21 @@ app.post('/api/bet', (req, res) => {
 
 app.post('/api/deposit', (req, res) => {
     const { phone, amount, utr } = req.body;
-    if (amount < 100) return res.json({ success: false, message: "Minimum Deposit is ₹100!" });
+    let amtNum = Number(amount);
+    if (amtNum < 100) return res.json({ success: false, message: "Minimum Deposit is ₹100!" });
     if (!db.deposits) db.deposits = [];
-    db.deposits.push({ phone, amount, utr, status: 'Pending', time: new Date() });
+    db.deposits.push({ phone, amount: amtNum, utr, status: 'Pending', time: new Date() });
     
+    if (db.users[phone]) {
+        if (db.users[phone].totalDeposit === undefined) db.users[phone].totalDeposit = 0;
+        db.users[phone].totalDeposit += amtNum;
+    }
+
     let user = db.users[phone];
     if (user && user.referredBy) {
         let userDeps = db.deposits.filter(d => d.phone === phone && d.status === 'Approved');
         if (userDeps.length === 0 && db.users[user.referredBy]) {
-            let bonus = amount * 0.10;
+            let bonus = amtNum * 0.10;
             db.users[user.referredBy].balance += bonus;
         }
     }
@@ -137,9 +149,23 @@ app.post('/api/deposit', (req, res) => {
 
 app.post('/api/withdraw', (req, res) => {
     const { phone, amt, bank, holder, acc, ifsc } = req.body;
-    if (amt < 100) return res.json({ success: false, message: "Minimum Withdrawal is ₹100!" });
+    let wdAmt = Number(amt);
+    if (wdAmt < 100) return res.json({ success: false, message: "Minimum Withdrawal is ₹100!" });
+    
+    let u = db.users[phone];
+    if (!u) return res.json({ success: false, message: "User not found!" });
+
+    let totalDep = u.totalDeposit || 0;
+    let totalWag = u.totalWagered || 0;
+
+    // Check wagering requirement: must play equal to total deposited amount
+    if (totalWag < totalDep) {
+        let remaining = totalDep - totalWag;
+        return res.json({ success: false, message: `Please complete game play of remaining ₹${remaining} (Total Deposit: ₹${totalDep}, Played: ₹${totalWag}) before withdrawal!` });
+    }
+
     if (!db.withdrawals) db.withdrawals = [];
-    db.withdrawals.push({ phone, amt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
+    db.withdrawals.push({ phone, amt: wdAmt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
     saveDB();
     res.json({ success: true, message: "Withdrawal request submitted successfully!" });
 });

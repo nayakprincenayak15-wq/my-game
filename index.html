@@ -5,34 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>maan.win</title>
     <style>
-        body { background-color: #0b1329; color: #ffffff; font-family: sans-serif; margin: 0; padding: 15px; }
+        body { background-color: #0b1329; color: #ffffff; font-family: sans-serif; margin: 0; padding: 12px; }
         .container { max-width: 420px; margin: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .logo { font-size: 24px; font-weight: bold; color: #f59e0b; }
-        .btn-top { background: #2563eb; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
-        .btn-logout { background: #dc2626; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
-        .card { background-color: #131d38; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #1e2d54; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .logo { font-size: 22px; font-weight: bold; color: #f59e0b; }
+        .btn-tg { background: #0ea5e9; color: #fff; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .btn-lo { background: #ef4444; color: #fff; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .card { background-color: #131d38; border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid #1e2d54; }
         input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #2a3c68; background-color: #0b1329; color: #fff; box-sizing: border-box; margin-bottom: 12px; }
         .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; }
         .btn-orange { background-color: #f59e0b; color: #000; }
-        .btn-green { background-color: #16a34a; color: #fff; }
-        .btn-red { background-color: #dc2626; color: #fff; }
-        .btn-blue { background-color: #2563eb; color: #fff; }
-        .btn-violet { background-color: #9333ea; color: #fff; }
-        .timer-box { font-size: 34px; font-weight: bold; color: #10b981; text-align: center; margin: 10px 0; }
-        .grid-num { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0; }
-        .num-btn { padding: 12px 0; border-radius: 50%; border: none; font-weight: bold; color: #fff; cursor: pointer; font-size: 15px; }
+        .btn-green { background-color: #22c55e; color: #fff; }
+        .btn-red { background-color: #ef4444; color: #fff; }
+        .btn-blue { background-color: #3b82f6; color: #fff; }
+        .btn-violet { background-color: #a855f7; color: #fff; }
+        .timer-box { font-size: 36px; font-weight: bold; color: #22c55e; text-align: center; margin: 5px 0; }
+        .grid-num { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 8px 0; }
+        .num-btn { padding: 10px 0; border-radius: 50%; border: none; font-weight: bold; color: #fff; cursor: pointer; font-size: 14px; }
         .hidden { display: none !important; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: flex-end; z-index: 1000; }
-        .modal-content { background: #131d38; padding: 20px; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 420px; border: 1px solid #1e2d54; box-sizing: border-box; }
+        .modal-content { background: #131d38; padding: 15px; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 420px; border: 1px solid #1e2d54; box-sizing: border-box; }
         .chip { padding: 6px 12px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid #3b82f6; cursor: pointer; font-weight: bold; text-align: center; }
-        .chip.active { background: #16a34a; border-color: #10b981; }
-        .status-pending { color: #dc2626; font-weight: bold; }
-        .status-approved { color: #16a34a; font-weight: bold; }
+        .chip.active { background: #22c55e; border-color: #22c55e; }
+        .status-pending { color: #ef4444; font-weight: bold; }
+        .status-approved { color: #22c55e; font-weight: bold; }
+        .notice-ticker { background: #1e293b; border: 1px solid #f59e0b; border-radius: 6px; padding: 6px 10px; font-size: 12px; color: #22c55e; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- AUTH SECTION -->
         <div id="auth-section">
             <div style="text-align:center; font-size:32px; font-weight:bold; color:#f59e0b; margin: 40px 0 20px 0;">maan.win</div>
             <div id="login-form" class="card">
@@ -45,36 +47,40 @@
             </div>
         </div>
 
+        <!-- MAIN EXACT DASHBOARD -->
         <div id="game-section" class="hidden">
             <div class="header">
                 <div class="logo">maan.win</div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn-top" onclick="window.open('https://t.me/support', '_blank')">Telegram</button>
-                    <button class="btn-logout" onclick="logout()">Logout</button>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn-tg" onclick="window.open('https://t.me/support', '_blank')">Telegram</button>
+                    <button class="btn-lo" onclick="logout()">Logout</button>
                 </div>
             </div>
 
-            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-size:12px; color:#94a3b8;" id="user-id-display">Balance (ID: MW000000)</div>
-                    <div style="font-size:22px; font-weight:bold; color:#10b981;" id="user-bal">₹0.00</div>
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:11px; color:#94a3b8;" id="user-id-display">Balance (ID: MW000000)</div>
+                        <div style="font-size:20px; font-weight:bold; color:#fff;" id="user-bal">₹0.00</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button style="background:#1e293b; color:#fff; border:1px solid #3b82f6; padding:5px 10px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="openModal('refer-modal')">🔗 Refer</button>
+                        <button style="background:#f59e0b; color:#000; border:none; padding:5px 10px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer;" onclick="openModal('notice-modal')">📢 NOTICE</button>
+                    </div>
                 </div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn-top" onclick="openModal('refer-modal')" style="background:#1e293b; border:1px solid #3b82f6;">Refer</button>
-                    <button class="btn-top" onclick="openModal('notice-modal')" style="background:#f59e0b; color:#000;">NOTICE</button>
-                </div>
+                <div class="notice-ticker" id="notice-banner">maan.win!</div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
                 <button class="btn btn-green" onclick="openModal('deposit-modal')">Deposit</button>
                 <button class="btn btn-red" onclick="openModal('withdraw-modal')">Withdraw</button>
             </div>
 
             <div class="card">
-                <div style="font-size:13px; color:#94a3b8;">Period: <span id="period-val" style="color:#f59e0b; font-weight:bold;"></span></div>
+                <div style="font-size:12px; color:#94a3b8; text-align:center;">Period: <span id="period-val" style="color:#f59e0b; font-weight:bold;">--</span></div>
                 <div class="timer-box" id="timer-val">00:30</div>
                 
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:8px;">
                     <button class="btn btn-green" onclick="openBetModal('Green', 1)">Green</button>
                     <button class="btn btn-violet" onclick="openBetModal('Violet', 3)">Violet</button>
                     <button class="btn btn-red" onclick="openBetModal('Red', 1)">Red</button>
@@ -93,31 +99,38 @@
                     <button class="num-btn btn-green" onclick="openBetModal('9', 10)">9</button>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
                     <button class="btn btn-orange" onclick="openBetModal('Big', 1)">Big</button>
                     <button class="btn btn-blue" onclick="openBetModal('Small', 1)">Small</button>
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="color:#f59e0b; margin-top:0;">Game History</h3>
-                <div id="history-list">Loading history...</div>
+                <div style="color:#f59e0b; font-weight:bold; margin-bottom:8px; font-size:14px;">Game History</div>
+                <div id="history-list" style="font-size:12px;">Loading...</div>
+            </div>
+
+            <div class="card">
+                <div style="color:#f59e0b; font-weight:bold; margin-bottom:8px; font-size:14px;">My Activity History</div>
+                <div id="activity-list" style="font-size:12px; color:#94a3b8;">No recent bets</div>
             </div>
         </div>
     </div>
+
+    <!-- BET MODAL -->
     <div id="bet-modal" class="modal hidden">
         <div class="modal-content">
-            <h3 style="color:#10b981; margin-top:0; text-align:center;">WinGo 30sec</h3>
-            <div style="background:#fff; color:#000; text-align:center; padding:8px; font-weight:bold; border-radius:6px; margin-bottom:15px;" id="bet-choice-title">Select Green</div>
-            <div style="font-size:14px; margin-bottom:8px;">Amount</div>
-            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:15px;">
+            <h3 style="color:#22c55e; margin-top:0; text-align:center; font-size:16px;">WinGo 30sec</h3>
+            <div style="background:#fff; color:#000; text-align:center; padding:6px; font-weight:bold; border-radius:6px; margin-bottom:12px; font-size:14px;" id="bet-choice-title">Select Green</div>
+            <div style="font-size:13px; margin-bottom:6px;">Amount</div>
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; margin-bottom:12px;">
                 <div class="chip active" onclick="setBaseAmt(1, this)">1</div>
                 <div class="chip" onclick="setBaseAmt(10, this)">10</div>
                 <div class="chip" onclick="setBaseAmt(100, this)">100</div>
                 <div class="chip" onclick="setBaseAmt(1000, this)">1000</div>
             </div>
-            <div style="font-size:14px; margin-bottom:8px;">Multiplier</div>
-            <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; margin-bottom:15px;">
+            <div style="font-size:13px; margin-bottom:6px;">Multiplier</div>
+            <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:5px; margin-bottom:12px;">
                 <div class="chip active" onclick="setMult(1, this)">X1</div>
                 <div class="chip" onclick="setMult(5, this)">X5</div>
                 <div class="chip" onclick="setMult(10, this)">X10</div>
@@ -125,15 +138,16 @@
                 <div class="chip" onclick="setMult(50, this)">X50</div>
                 <div class="chip" onclick="setMult(100, this)">X100</div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <button class="btn btn-red" onclick="closeModal('bet-modal')" style="width:40%;">Cancel</button>
-                <button class="btn btn-green" onclick="confirmBet()" style="width:55%;">Total Amount ₹<span id="total-bet-amt">1.00</span></button>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button class="btn btn-red" onclick="closeModal('bet-modal')" style="width:38%; padding:10px;">Cancel</button>
+                <button class="btn btn-green" onclick="confirmBet()" style="width:58%; padding:10px;">₹<span id="total-bet-amt">1.00</span></button>
             </div>
         </div>
     </div>
 
+    <!-- OTHER MODALS -->
     <div id="notice-modal" class="modal hidden">
-        <div class="modal-content" style="border-radius:12px; margin:auto;">
+        <div class="modal-content" style="margin:auto; border-radius:12px;">
             <h3 style="color:#f59e0b; margin-top:0;">Notice</h3>
             <p id="notice-text">Welcome to maan.win!</p>
             <button class="btn btn-orange" onclick="closeModal('notice-modal')">Close</button>
@@ -141,9 +155,9 @@
     </div>
 
     <div id="refer-modal" class="modal hidden">
-        <div class="modal-content" style="border-radius:12px; margin:auto;">
+        <div class="modal-content" style="margin:auto; border-radius:12px;">
             <h3 style="color:#3b82f6; margin-top:0;">Refer & Earn</h3>
-            <p style="font-size:13px; color:#cbd5e1;">Get 10% bonus on friend's deposit!</p>
+            <p style="font-size:12px; color:#cbd5e1;">Get 10% bonus on friend's deposit!</p>
             <input type="text" id="refer-link" readonly>
             <button class="btn btn-green" onclick="copyRefer()">Copy Link</button>
             <button class="btn btn-red" onclick="closeModal('refer-modal')" style="margin-top:8px;">Close</button>
@@ -151,43 +165,42 @@
     </div>
 
     <div id="deposit-modal" class="modal hidden">
-        <div class="modal-content" style="border-radius:12px; margin:auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 style="color:#f59e0b; margin:0;">Deposit Funds (Min ₹100)</h3>
-                <button class="btn-top" onclick="showDepositHistory()" style="background:#3b82f6;">History</button>
+        <div class="modal-content" style="margin:auto; border-radius:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="color:#f59e0b; margin:0; font-size:16px;">Deposit Funds (Min ₹100)</h3>
+                <button style="background:#3b82f6; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;" onclick="showDepositHistory()">History</button>
             </div>
-            <div style="text-align:center; margin-bottom:10px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi" style="border-radius:8px;"></div>
-            <input type="number" id="dep-amt" placeholder="Enter Amount (Min ₹100)">
-            <input type="text" id="dep-utr" placeholder="Enter 12-digit UTR Number">
+            <div style="text-align:center; margin-bottom:8px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=upi://pay?pa=merchant@upi" style="border-radius:8px;"></div>
+            <input type="number" id="dep-amt" placeholder="Amount (Min ₹100)">
+            <input type="text" id="dep-utr" placeholder="12-digit UTR Number">
             <button class="btn btn-orange" onclick="submitDeposit()">Submit Deposit</button>
-            <button class="btn btn-red" onclick="closeModal('deposit-modal')" style="margin-top:8px;">Cancel</button>
+            <button class="btn btn-red" onclick="closeModal('deposit-modal')" style="margin-top:6px;">Cancel</button>
         </div>
     </div>
 
     <div id="withdraw-modal" class="modal hidden">
-        <div class="modal-content" style="border-radius:12px; margin:auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 style="color:#f59e0b; margin:0;">Withdrawal Request (Min ₹100)</h3>
-                <button class="btn-top" onclick="showWithdrawHistory()" style="background:#3b82f6;">History</button>
+        <div class="modal-content" style="margin:auto; border-radius:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="color:#f59e0b; margin:0; font-size:16px;">Withdrawal (Min ₹100)</h3>
+                <button style="background:#3b82f6; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;" onclick="showWithdrawHistory()">History</button>
             </div>
             <input type="number" id="wd-amt" placeholder="Amount (Min ₹100)">
             <input type="text" id="wd-bank" placeholder="Bank Name">
-            <input type="text" id="wd-holder" placeholder="Bank Holder Name">
+            <input type="text" id="wd-holder" placeholder="Holder Name">
             <input type="text" id="wd-acc" placeholder="Account Number">
             <input type="text" id="wd-ifsc" placeholder="IFSC Code">
             <button class="btn btn-orange" onclick="submitWithdraw()">Submit Request</button>
-            <button class="btn btn-red" onclick="closeModal('withdraw-modal')" style="margin-top:8px;">Cancel</button>
+            <button class="btn btn-red" onclick="closeModal('withdraw-modal')" style="margin-top:6px;">Cancel</button>
         </div>
     </div>
 
     <div id="history-modal" class="modal hidden">
-        <div class="modal-content" style="border-radius:12px; margin:auto; max-height:80vh; overflow-y:auto;">
-            <h3 style="color:#f59e0b; margin-top:0;" id="history-modal-title">History</h3>
+        <div class="modal-content" style="margin:auto; border-radius:12px; max-height:75vh; overflow-y:auto;">
+            <h3 style="color:#f59e0b; margin-top:0; font-size:16px;" id="history-modal-title">History</h3>
             <div id="history-modal-content"></div>
-            <button class="btn btn-red" onclick="closeModal('history-modal')" style="margin-top:15px;">Close</button>
+            <button class="btn btn-red" onclick="closeModal('history-modal')" style="margin-top:12px;">Close</button>
         </div>
     </div>
-
     <script>
         let isReg = false;
         let currentUser = null;
@@ -243,13 +256,28 @@
                 let m = Math.floor(g.timer/60).toString().padStart(2,'0');
                 let s = (g.timer%60).toString().padStart(2,'0');
                 document.getElementById('timer-val').innerText = m + ':' + s;
-                let hHtml = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Period</th><th>Num</th><th>Result</th></tr>';
-                (g.history || []).slice(0, 10).forEach(h => {
-                    let colorStyle = (h.num == 0 || h.num == 5) ? 'color:#9333ea' : (h.num % 2 === 0 ? 'color:#dc2626' : 'color:#16a34a');
-                    hHtml += '<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>' + h.period + '</td><td style="' + colorStyle + '; font-weight:bold;">' + h.num + '</td><td>' + h.result + '</td></tr>';
+                
+                if(g.notice) {
+                    document.getElementById('notice-banner').innerText = g.notice;
+                    document.getElementById('notice-text').innerText = g.notice;
+                }
+
+                let hHtml = '<table style="width:100%; text-align:center; font-size:12px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Period</th><th>Num</th><th>Result</th></tr>';
+                (g.history || []).slice(0, 8).forEach(h => {
+                    let colorStyle = (h.num == 0 || h.num == 5) ? 'color:#a855f7' : (h.num % 2 === 0 ? 'color:#ef4444' : 'color:#22c55e');
+                    hHtml += '<tr style="border-bottom:1px solid #1e2d54; height:30px;"><td>' + h.period + '</td><td style="' + colorStyle + '; font-weight:bold;">' + h.num + '</td><td>' + h.result + '</td></tr>';
                 });
                 hHtml += '</table>';
                 document.getElementById('history-list').innerHTML = hHtml;
+            });
+
+            fetch('/api/user-bets?phone=' + currentUser.phone).then(r => r.json()).then(data => {
+                let aHtml = '<table style="width:100%; text-align:center; font-size:12px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Period</th><th>Choice</th><th>Amt</th></tr>';
+                (data.bets || []).slice(0, 5).forEach(b => {
+                    aHtml += '<tr style="border-bottom:1px solid #1e2d54; height:28px;"><td>' + b.period + '</td><td>' + b.choice + '</td><td>₹' + b.amount + '</td></tr>';
+                });
+                aHtml += '</table>';
+                document.getElementById('activity-list').innerHTML = aHtml || 'No bets placed yet';
             });
         }
 
@@ -332,10 +360,10 @@
         function showDepositHistory() {
             fetch('/api/user-deposits?phone=' + currentUser.phone).then(r=>r.json()).then(data => {
                 document.getElementById('history-modal-title').innerText = "Deposit History";
-                let html = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Amount</th><th>UTR</th><th>Status</th></tr>';
+                let html = '<table style="width:100%; text-align:center; font-size:12px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Amount</th><th>UTR</th><th>Status</th></tr>';
                 (data.deposits || []).forEach(d => {
                     let stClass = d.status === 'Approved' ? 'status-approved' : 'status-pending';
-                    html += '<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>₹' + d.amount + '</td><td>' + d.utr + '</td><td class="' + stClass + '">' + d.status + '</td></tr>';
+                    html += '<tr style="border-bottom:1px solid #1e2d54; height:32px;"><td>₹' + d.amount + '</td><td>' + d.utr + '</td><td class="' + stClass + '">' + d.status + '</td></tr>';
                 });
                 html += '</table>';
                 document.getElementById('history-modal-content').innerHTML = html || 'No deposits yet';
@@ -346,10 +374,10 @@
         function showWithdrawHistory() {
             fetch('/api/user-withdrawals?phone=' + currentUser.phone).then(r=>r.json()).then(data => {
                 document.getElementById('history-modal-title').innerText = "Withdrawal History";
-                let html = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Amount</th><th>Status</th></tr>';
+                let html = '<table style="width:100%; text-align:center; font-size:12px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Amount</th><th>Status</th></tr>';
                 (data.withdrawals || []).forEach(w => {
                     let stClass = w.status === 'Approved' ? 'status-approved' : 'status-pending';
-                    html += '<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>₹' + w.amt + '</td><td class="' + stClass + '">' + w.status + '</td></tr>';
+                    html += '<tr style="border-bottom:1px solid #1e2d54; height:32px;"><td>₹' + w.amt + '</td><td class="' + stClass + '">' + w.status + '</td></tr>';
                 });
                 html += '</table>';
                 document.getElementById('history-modal-content').innerHTML = html || 'No withdrawals yet';

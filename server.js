@@ -9,16 +9,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
 const DB_PATH = path.join(__dirname, 'db.json');
-let db = { users: {}, history: [], settings: {}, bets: [], deposits: [], withdrawals: [] };
+let db = { users: {}, history: [], settings: { notice: 'Welcome to maan.win! Best color prediction game.' }, bets: [], deposits: [], withdrawals: [] };
 
 if (fs.existsSync(DB_PATH)) {
-    try { db = JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); } catch(e){}
+    try { db = { ...db, ...JSON.parse(fs.readFileSync(DB_PATH, 'utf8')) }; } catch(e){}
 }
 function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-let currentPeriod = "20261016000080";
+let currentPeriod = "20261016000099";
 let timerSeconds = 30;
 
 setInterval(() => {
@@ -60,7 +60,7 @@ app.post('/api/login', (req, res) => {
 
 app.get('/api/game-state', (req, res) => {
     if (!db.history) db.history = [];
-    res.json({ period: currentPeriod, timer: timerSeconds, history: db.history });
+    res.json({ period: currentPeriod, timer: timerSeconds, history: db.history, notice: db.settings.notice });
 });
 
 app.post('/api/bet', (req, res) => {
@@ -71,6 +71,12 @@ app.post('/api/bet', (req, res) => {
     db.bets.push({ phone, amount, choice, period: currentPeriod, time: new Date() });
     saveDB();
     res.json({ success: true, message: "Bet placed successfully!" });
+});
+
+app.get('/api/user-bets', (req, res) => {
+    let phone = req.query.phone;
+    let list = (db.bets || []).filter(b => b.phone === phone).reverse();
+    res.json({ bets: list });
 });
 
 app.post('/api/deposit', (req, res) => {
@@ -93,13 +99,13 @@ app.post('/api/withdraw', (req, res) => {
 
 app.get('/api/user-deposits', (req, res) => {
     let phone = req.query.phone;
-    let list = (db.deposits || []).filter(d => d.phone === phone);
+    let list = (db.deposits || []).filter(d => d.phone === phone).reverse();
     res.json({ deposits: list });
 });
 
 app.get('/api/user-withdrawals', (req, res) => {
     let phone = req.query.phone;
-    let list = (db.withdrawals || []).filter(w => w.phone === phone);
+    let list = (db.withdrawals || []).filter(w => w.phone === phone).reverse();
     res.json({ withdrawals: list });
 });
 

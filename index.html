@@ -23,13 +23,15 @@
         .grid-num { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 10px 0; }
         .num-btn { padding: 12px 0; border-radius: 50%; border: none; font-weight: bold; color: #fff; cursor: pointer; font-size: 15px; }
         .hidden { display: none !important; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #131d38; padding: 20px; border-radius: 12px; width: 90%; max-width: 350px; border: 1px solid #1e2d54; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: flex-end; z-index: 1000; }
+        .modal-content { background: #131d38; padding: 20px; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 420px; border: 1px solid #1e2d54; box-sizing: border-box; }
+        .chip { padding: 6px 12px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid #3b82f6; cursor: pointer; font-weight: bold; text-align: center; }
+        .chip.active { background: #16a34a; border-color: #10b981; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- LOGIN / REGISTER PAGE -->
+        <!-- AUTH SECTION -->
         <div id="auth-section">
             <div style="text-align:center; font-size:32px; font-weight:bold; color:#f59e0b; margin: 40px 0 20px 0;">maan.win</div>
             <div id="login-form" class="card">
@@ -73,40 +75,71 @@
                 <div class="timer-box" id="timer-val">00:30</div>
                 
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
-                    <button class="btn btn-green" onclick="openBet('Green', 1)">Green</button>
-                    <button class="btn btn-violet" onclick="openBet('Violet', 3)">Violet</button>
-                    <button class="btn btn-red" onclick="openBet('Red', 1)">Red</button>
+                    <button class="btn btn-green" onclick="openBetModal('Green', 1)">Green</button>
+                    <button class="btn btn-violet" onclick="openBetModal('Violet', 3)">Violet</button>
+                    <button class="btn btn-red" onclick="openBetModal('Red', 1)">Red</button>
                 </div>
 
                 <div class="grid-num">
-                    <button class="num-btn btn-green" onclick="openBet('0', 11)">0</button>
-                    <button class="num-btn btn-green" onclick="openBet('1', 20)">1</button>
-                    <button class="num-btn btn-red" onclick="openBet('2', 30)">2</button>
-                    <button class="num-btn btn-green" onclick="openBet('3', 4)">3</button>
-                    <button class="num-btn btn-red" onclick="openBet('4', 5)">4</button>
-                    <button class="num-btn btn-violet" onclick="openBet('5', 60)">5</button>
-                    <button class="num-btn btn-red" onclick="openBet('6', 70)">6</button>
-                    <button class="num-btn btn-green" onclick="openBet('7', 80)">7</button>
-                    <button class="num-btn btn-red" onclick="openBet('8', 90)">8</button>
-                    <button class="num-btn btn-green" onclick="openBet('9', 10)">9</button>
+                    <button class="num-btn btn-green" onclick="openBetModal('0', 11)">0</button>
+                    <button class="num-btn btn-green" onclick="openBetModal('1', 20)">1</button>
+                    <button class="num-btn btn-red" onclick="openBetModal('2', 30)">2</button>
+                    <button class="num-btn btn-green" onclick="openBetModal('3', 4)">3</button>
+                    <button class="num-btn btn-red" onclick="openBetModal('4', 5)">4</button>
+                    <button class="num-btn btn-violet" onclick="openBetModal('5', 60)">5</button>
+                    <button class="num-btn btn-red" onclick="openBetModal('6', 70)">6</button>
+                    <button class="num-btn btn-green" onclick="openBetModal('7', 80)">7</button>
+                    <button class="num-btn btn-red" onclick="openBetModal('8', 90)">8</button>
+                    <button class="num-btn btn-green" onclick="openBetModal('9', 10)">9</button>
                 </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
-                    <button class="btn btn-orange" onclick="openBet('Big', 1)">Big</button>
-                    <button class="btn btn-blue" onclick="openBet('Small', 1)">Small</button>
+                    <button class="btn btn-orange" onclick="openBetModal('Big', 1)">Big</button>
+                    <button class="btn btn-blue" onclick="openBetModal('Small', 1)">Small</button>
                 </div>
             </div>
 
             <div class="card">
                 <h3 style="color:#f59e0b; margin-top:0;">Game History</h3>
-                <div id="history-list"></div>
+                <div id="history-list">Loading history...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BET MODAL (WinGo Style) -->
+    <div id="bet-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 style="color:#10b981; margin-top:0; text-align:center;">WinGo 30sec</h3>
+            <div style="background:#fff; color:#000; text-align:center; padding:8px; font-weight:bold; border-radius:6px; margin-bottom:15px;" id="bet-choice-title">Select Green</div>
+            
+            <div style="font-size:14px; margin-bottom:8px;">Amount</div>
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:15px;">
+                <div class="chip active" onclick="setBaseAmt(1, this)">1</div>
+                <div class="chip" onclick="setBaseAmt(10, this)">10</div>
+                <div class="chip" onclick="setBaseAmt(100, this)">100</div>
+                <div class="chip" onclick="setBaseAmt(1000, this)">1000</div>
+            </div>
+
+            <div style="font-size:14px; margin-bottom:8px;">Multiplier</div>
+            <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; margin-bottom:15px;">
+                <div class="chip active" onclick="setMult(1, this)">X1</div>
+                <div class="chip" onclick="setMult(5, this)">X5</div>
+                <div class="chip" onclick="setMult(10, this)">X10</div>
+                <div class="chip" onclick="setMult(20, this)">X20</div>
+                <div class="chip" onclick="setMult(50, this)">X50</div>
+                <div class="chip" onclick="setMult(100, this)">X100</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <button class="btn btn-red" onclick="closeModal('bet-modal')" style="width:40%;">Cancel</button>
+                <button class="btn btn-green" onclick="confirmBet()" style="width:55%;">Total Amount ₹<span id="total-bet-amt">1.00</span></button>
             </div>
         </div>
     </div>
 
     <!-- MODALS -->
     <div id="notice-modal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content" style="border-radius:12px; margin:auto;">
             <h3 style="color:#f59e0b; margin-top:0;">Notice</h3>
             <p id="notice-text">Welcome to maan.win!</p>
             <button class="btn btn-orange" onclick="closeModal('notice-modal')">Close</button>
@@ -114,7 +147,7 @@
     </div>
 
     <div id="refer-modal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content" style="border-radius:12px; margin:auto;">
             <h3 style="color:#3b82f6; margin-top:0;">Refer & Earn</h3>
             <p style="font-size:13px; color:#cbd5e1;">Get 10% bonus on friend's deposit!</p>
             <input type="text" id="refer-link" readonly>
@@ -124,19 +157,20 @@
     </div>
 
     <div id="deposit-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3 style="color:#f59e0b; margin-top:0;">Deposit Funds</h3>
-            <input type="number" id="dep-amt" placeholder="Amount (e.g. 100)">
-            <input type="text" id="dep-utr" placeholder="Enter 12-digit UTR">
+        <div class="modal-content" style="border-radius:12px; margin:auto;">
+            <h3 style="color:#f59e0b; margin-top:0;">Deposit Funds (Min ₹100)</h3>
+            <div style="text-align:center; margin-bottom:10px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi" style="border-radius:8px;"></div>
+            <input type="number" id="dep-amt" placeholder="Enter Amount (Min ₹100)">
+            <input type="text" id="dep-utr" placeholder="Enter 12-digit UTR Number">
             <button class="btn btn-orange" onclick="submitDeposit()">Submit Deposit</button>
             <button class="btn btn-red" onclick="closeModal('deposit-modal')" style="margin-top:8px;">Cancel</button>
         </div>
     </div>
 
     <div id="withdraw-modal" class="modal hidden">
-        <div class="modal-content">
-            <h3 style="color:#f59e0b; margin-top:0;">Withdrawal Request</h3>
-            <input type="number" id="wd-amt" placeholder="Amount">
+        <div class="modal-content" style="border-radius:12px; margin:auto;">
+            <h3 style="color:#f59e0b; margin-top:0;">Withdrawal Request (Min ₹100)</h3>
+            <input type="number" id="wd-amt" placeholder="Amount (Min ₹100)">
             <input type="text" id="wd-bank" placeholder="Bank Name">
             <input type="text" id="wd-holder" placeholder="Bank Holder Name">
             <input type="text" id="wd-acc" placeholder="Account Number">
@@ -149,6 +183,9 @@
     <script>
         let isReg = false;
         let currentUser = null;
+        let selectedChoice = '';
+        let baseAmount = 1;
+        let multiplierVal = 1;
 
         function toggleMode() {
             isReg = !isReg;
@@ -199,9 +236,11 @@
                 let m = Math.floor(g.timer/60).toString().padStart(2,'0');
                 let s = (g.timer%60).toString().padStart(2,'0');
                 document.getElementById('timer-val').innerText = m + ':' + s;
-                let hHtml = '<table style="width:100%; text-align:center; font-size:13px;"><tr style="color:#f59e0b;"><th>Period</th><th>Num</th><th>Result</th></tr>';
+                
+                let hHtml = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Period</th><th>Num</th><th>Result</th></tr>';
                 (g.history || []).slice(0, 10).forEach(h => {
-                    hHtml += '<tr><td>'+h.period+'</td><td>'+h.num+'</td><td>'+h.result+'</td></tr>';
+                    let colorStyle = (h.num == 0 || h.num == 5) ? 'color:#9333ea' : (h.num % 2 === 0 ? 'color:#dc2626' : 'color:#16a34a');
+                    hHtml += `<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>${h.period}</td><td style="${colorStyle}; font-weight:bold;">${h.num}</td><td>${h.result}</td></tr>`;
                 });
                 hHtml += '</table>';
                 document.getElementById('history-list').innerHTML = hHtml;
@@ -217,26 +256,51 @@
             alert("Referral link copied!");
         }
 
-        function openBet(choice, multiplier) {
-            let amt = prompt("Enter bet amount:", "100");
-            if(!amt || isNaN(amt)) return;
+        function openBetModal(choice, mult) {
+            selectedChoice = choice;
+            document.getElementById('bet-choice-title').innerText = "Select " + choice;
+            openModal('bet-modal');
+        }
+
+        function setBaseAmt(amt, el) {
+            baseAmount = amt;
+            el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            updateBetTotal();
+        }
+
+        function setMult(mult, el) {
+            multiplierVal = mult;
+            el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            updateBetTotal();
+        }
+
+        function updateBetTotal() {
+            document.getElementById('total-bet-amt').innerText = (baseAmount * multiplierVal).toFixed(2);
+        }
+
+        function confirmBet() {
+            let totalAmt = baseAmount * multiplierVal;
             fetch('/api/bet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: currentUser.phone, amount: Number(amt), choice, multiplier })
+                body: JSON.stringify({ phone: currentUser.phone, amount: totalAmt, choice: selectedChoice })
             }).then(r => r.json()).then(d => {
                 alert(d.message);
                 if(d.success) {
-                    currentUser.balance -= Number(amt);
+                    currentUser.balance -= totalAmt;
                     document.getElementById('user-bal').innerText = "₹" + Number(currentUser.balance).toFixed(2);
+                    closeModal('bet-modal');
                 }
             });
         }
 
         function submitDeposit() {
-            let amt = document.getElementById('dep-amt').value;
+            let amt = Number(document.getElementById('dep-amt').value);
             let utr = document.getElementById('dep-utr').value;
-            if(!amt || !utr) { alert("Fill all fields!"); return; }
+            if(!amt || amt < 100) { alert("Minimum Deposit amount is ₹100!"); return; }
+            if(!utr) { alert("Enter UTR number!"); return; }
             fetch('/api/deposit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -245,12 +309,13 @@
         }
 
         function submitWithdraw() {
-            let amt = document.getElementById('wd-amt').value;
+            let amt = Number(document.getElementById('wd-amt').value);
             let bank = document.getElementById('wd-bank').value;
             let holder = document.getElementById('wd-holder').value;
             let acc = document.getElementById('wd-acc').value;
             let ifsc = document.getElementById('wd-ifsc').value;
-            if(!amt || !bank || !acc) { alert("Fill all fields!"); return; }
+            if(!amt || amt < 100) { alert("Minimum Withdrawal amount is ₹100!"); return; }
+            if(!bank || !acc) { alert("Fill all bank details!"); return; }
             fetch('/api/withdraw', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

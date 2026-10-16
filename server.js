@@ -18,12 +18,21 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-let currentPeriod = "20261015033733";
+let currentPeriod = "20261016000080";
 let timerSeconds = 30;
+
 setInterval(() => {
     let now = new Date();
     timerSeconds = 30 - (now.getSeconds() % 30);
-    let p = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + Math.floor((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 30).toString().padStart(5, '0');
+    let p = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + Math.floor((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 30).toString().padStart(6, '0');
+    
+    if (timerSeconds === 30) {
+        let winNum = Math.floor(Math.random() * 10);
+        let winResult = winNum >= 5 ? "Big" : "Small";
+        if (!db.history) db.history = [];
+        db.history.unshift({ period: currentPeriod, num: winNum, result: winResult });
+        saveDB();
+    }
     currentPeriod = p;
 }, 1000);
 
@@ -55,17 +64,18 @@ app.get('/api/game-state', (req, res) => {
 });
 
 app.post('/api/bet', (req, res) => {
-    const { phone, amount, choice, multiplier } = req.body;
+    const { phone, amount, choice } = req.body;
     if (!db.users[phone] || db.users[phone].balance < amount) return res.json({ success: false, message: "Insufficient balance!" });
     db.users[phone].balance -= amount;
     if (!db.bets) db.bets = [];
-    db.bets.push({ phone, amount, choice, multiplier, period: currentPeriod, time: new Date() });
+    db.bets.push({ phone, amount, choice, period: currentPeriod, time: new Date() });
     saveDB();
     res.json({ success: true, message: "Bet placed successfully!" });
 });
 
 app.post('/api/deposit', (req, res) => {
     const { phone, amount, utr } = req.body;
+    if (amount < 100) return res.json({ success: false, message: "Minimum Deposit is ₹100!" });
     if (!db.deposits) db.deposits = [];
     db.deposits.push({ phone, amount, utr, status: 'Pending', time: new Date() });
     saveDB();
@@ -74,6 +84,7 @@ app.post('/api/deposit', (req, res) => {
 
 app.post('/api/withdraw', (req, res) => {
     const { phone, amt, bank, holder, acc, ifsc } = req.body;
+    if (amt < 100) return res.json({ success: false, message: "Minimum Withdrawal is ₹100!" });
     if (!db.withdrawals) db.withdrawals = [];
     db.withdrawals.push({ phone, amt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
     saveDB();

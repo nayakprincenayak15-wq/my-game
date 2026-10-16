@@ -50,7 +50,20 @@
             </div>
 
             <!-- SEARCH USER A-Z HISTORY -->
-            <div class="card">
+            
+    <!-- Dedicated Separate Bank Details Checker -->
+    <div class="card" style="margin-top:15px; border: 1px solid #3b82f6;">
+        <h4 style="color:#3b82f6; margin-top:0;">🏦 Check User Bank Details</h4>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <input type="text" id="bankSearchPhone" placeholder="Enter User Phone Number" style="flex:1; padding:8px; border-radius:6px; border:1px solid #1e2d54; background:#0b1329; color:#fff;">
+            <button onclick="fetchUserBankDetails()" style="padding:8px 15px; background:#3b82f6; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Search</button>
+        </div>
+        <div id="bankDetailsDisplay" style="background:#0b1329; padding:10px; border-radius:6px; font-size:13px; color:#e2e8f0; display:none;">
+            <!-- Bank Details Output -->
+        </div>
+    </div>
+    
+<div class="card">
                 <h4 style="color:#3b82f6; margin-top:0;">🔍 User History Search Box</h4>
                 <input type="text" id="search-phone" placeholder="Enter Phone Number">
                 <button class="btn btn-blue" onclick="searchUser()">Search Full A-Z History</button>

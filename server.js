@@ -91,4 +91,16 @@ app.post('/api/withdraw', (req, res) => {
     res.json({ success: true, message: "Withdrawal request submitted successfully!" });
 });
 
+app.get('/api/user-deposits', (req, res) => {
+    let phone = req.query.phone;
+    let list = (db.deposits || []).filter(d => d.phone === phone);
+    res.json({ deposits: list });
+});
+
+app.get('/api/user-withdrawals', (req, res) => {
+    let phone = req.query.phone;
+    let list = (db.withdrawals || []).filter(w => w.phone === phone);
+    res.json({ withdrawals: list });
+});
+
 app.listen(PORT, () => { console.log('Server running on port ' + PORT); });

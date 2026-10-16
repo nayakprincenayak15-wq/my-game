@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>maan.win</title>
     <style>
-        body { background-color: #0b1329; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 15px; }
+        body { background-color: #0b1329; color: #ffffff; font-family: sans-serif; margin: 0; padding: 15px; }
         .container { max-width: 420px; margin: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .logo { font-size: 24px; font-weight: bold; color: #f59e0b; }
@@ -27,11 +27,12 @@
         .modal-content { background: #131d38; padding: 20px; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 420px; border: 1px solid #1e2d54; box-sizing: border-box; }
         .chip { padding: 6px 12px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid #3b82f6; cursor: pointer; font-weight: bold; text-align: center; }
         .chip.active { background: #16a34a; border-color: #10b981; }
+        .status-pending { color: #dc2626; font-weight: bold; }
+        .status-approved { color: #16a34a; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- AUTH SECTION -->
         <div id="auth-section">
             <div style="text-align:center; font-size:32px; font-weight:bold; color:#f59e0b; margin: 40px 0 20px 0;">maan.win</div>
             <div id="login-form" class="card">
@@ -44,7 +45,6 @@
             </div>
         </div>
 
-        <!-- MAIN GAME DASHBOARD -->
         <div id="game-section" class="hidden">
             <div class="header">
                 <div class="logo">maan.win</div>
@@ -105,13 +105,10 @@
             </div>
         </div>
     </div>
-
-    <!-- BET MODAL (WinGo Style) -->
     <div id="bet-modal" class="modal hidden">
         <div class="modal-content">
             <h3 style="color:#10b981; margin-top:0; text-align:center;">WinGo 30sec</h3>
             <div style="background:#fff; color:#000; text-align:center; padding:8px; font-weight:bold; border-radius:6px; margin-bottom:15px;" id="bet-choice-title">Select Green</div>
-            
             <div style="font-size:14px; margin-bottom:8px;">Amount</div>
             <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-bottom:15px;">
                 <div class="chip active" onclick="setBaseAmt(1, this)">1</div>
@@ -119,7 +116,6 @@
                 <div class="chip" onclick="setBaseAmt(100, this)">100</div>
                 <div class="chip" onclick="setBaseAmt(1000, this)">1000</div>
             </div>
-
             <div style="font-size:14px; margin-bottom:8px;">Multiplier</div>
             <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; margin-bottom:15px;">
                 <div class="chip active" onclick="setMult(1, this)">X1</div>
@@ -129,7 +125,6 @@
                 <div class="chip" onclick="setMult(50, this)">X50</div>
                 <div class="chip" onclick="setMult(100, this)">X100</div>
             </div>
-
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <button class="btn btn-red" onclick="closeModal('bet-modal')" style="width:40%;">Cancel</button>
                 <button class="btn btn-green" onclick="confirmBet()" style="width:55%;">Total Amount ₹<span id="total-bet-amt">1.00</span></button>
@@ -137,7 +132,6 @@
         </div>
     </div>
 
-    <!-- MODALS -->
     <div id="notice-modal" class="modal hidden">
         <div class="modal-content" style="border-radius:12px; margin:auto;">
             <h3 style="color:#f59e0b; margin-top:0;">Notice</h3>
@@ -158,7 +152,10 @@
 
     <div id="deposit-modal" class="modal hidden">
         <div class="modal-content" style="border-radius:12px; margin:auto;">
-            <h3 style="color:#f59e0b; margin-top:0;">Deposit Funds (Min ₹100)</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="color:#f59e0b; margin:0;">Deposit Funds (Min ₹100)</h3>
+                <button class="btn-top" onclick="showDepositHistory()" style="background:#3b82f6;">History</button>
+            </div>
             <div style="text-align:center; margin-bottom:10px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi" style="border-radius:8px;"></div>
             <input type="number" id="dep-amt" placeholder="Enter Amount (Min ₹100)">
             <input type="text" id="dep-utr" placeholder="Enter 12-digit UTR Number">
@@ -169,7 +166,10 @@
 
     <div id="withdraw-modal" class="modal hidden">
         <div class="modal-content" style="border-radius:12px; margin:auto;">
-            <h3 style="color:#f59e0b; margin-top:0;">Withdrawal Request (Min ₹100)</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="color:#f59e0b; margin:0;">Withdrawal Request (Min ₹100)</h3>
+                <button class="btn-top" onclick="showWithdrawHistory()" style="background:#3b82f6;">History</button>
+            </div>
             <input type="number" id="wd-amt" placeholder="Amount (Min ₹100)">
             <input type="text" id="wd-bank" placeholder="Bank Name">
             <input type="text" id="wd-holder" placeholder="Bank Holder Name">
@@ -177,6 +177,14 @@
             <input type="text" id="wd-ifsc" placeholder="IFSC Code">
             <button class="btn btn-orange" onclick="submitWithdraw()">Submit Request</button>
             <button class="btn btn-red" onclick="closeModal('withdraw-modal')" style="margin-top:8px;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal hidden">
+        <div class="modal-content" style="border-radius:12px; margin:auto; max-height:80vh; overflow-y:auto;">
+            <h3 style="color:#f59e0b; margin-top:0;" id="history-modal-title">History</h3>
+            <div id="history-modal-content"></div>
+            <button class="btn btn-red" onclick="closeModal('history-modal')" style="margin-top:15px;">Close</button>
         </div>
     </div>
 
@@ -198,7 +206,6 @@
             let phone = document.getElementById('phone').value;
             let password = document.getElementById('password').value;
             let cpassword = document.getElementById('cpassword').value;
-
             if(!phone || phone.length < 10) { alert("Enter valid 10-digit phone number!"); return; }
             if(password.length < 8) { alert("Password must be at least 8 characters!"); return; }
             if(isReg && password !== cpassword) { alert("Passwords do not match!"); return; }
@@ -236,11 +243,10 @@
                 let m = Math.floor(g.timer/60).toString().padStart(2,'0');
                 let s = (g.timer%60).toString().padStart(2,'0');
                 document.getElementById('timer-val').innerText = m + ':' + s;
-                
                 let hHtml = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Period</th><th>Num</th><th>Result</th></tr>';
                 (g.history || []).slice(0, 10).forEach(h => {
                     let colorStyle = (h.num == 0 || h.num == 5) ? 'color:#9333ea' : (h.num % 2 === 0 ? 'color:#dc2626' : 'color:#16a34a');
-                    hHtml += `<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>${h.period}</td><td style="${colorStyle}; font-weight:bold;">${h.num}</td><td>${h.result}</td></tr>`;
+                    hHtml += '<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>' + h.period + '</td><td style="' + colorStyle + '; font-weight:bold;">' + h.num + '</td><td>' + h.result + '</td></tr>';
                 });
                 hHtml += '</table>';
                 document.getElementById('history-list').innerHTML = hHtml;
@@ -321,6 +327,34 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone: currentUser.phone, amt, bank, holder, acc, ifsc })
             }).then(r => r.json()).then(d => { alert(d.message); closeModal('withdraw-modal'); });
+        }
+
+        function showDepositHistory() {
+            fetch('/api/user-deposits?phone=' + currentUser.phone).then(r=>r.json()).then(data => {
+                document.getElementById('history-modal-title').innerText = "Deposit History";
+                let html = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Amount</th><th>UTR</th><th>Status</th></tr>';
+                (data.deposits || []).forEach(d => {
+                    let stClass = d.status === 'Approved' ? 'status-approved' : 'status-pending';
+                    html += '<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>₹' + d.amount + '</td><td>' + d.utr + '</td><td class="' + stClass + '">' + d.status + '</td></tr>';
+                });
+                html += '</table>';
+                document.getElementById('history-modal-content').innerHTML = html || 'No deposits yet';
+                openModal('history-modal');
+            });
+        }
+
+        function showWithdrawHistory() {
+            fetch('/api/user-withdrawals?phone=' + currentUser.phone).then(r=>r.json()).then(data => {
+                document.getElementById('history-modal-title').innerText = "Withdrawal History";
+                let html = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th>Amount</th><th>Status</th></tr>';
+                (data.withdrawals || []).forEach(w => {
+                    let stClass = w.status === 'Approved' ? 'status-approved' : 'status-pending';
+                    html += '<tr style="border-bottom:1px solid #1e2d54; height:35px;"><td>₹' + w.amt + '</td><td class="' + stClass + '">' + w.status + '</td></tr>';
+                });
+                html += '</table>';
+                document.getElementById('history-modal-content').innerHTML = html || 'No withdrawals yet';
+                openModal('history-modal');
+            });
         }
     </script>
 </body>

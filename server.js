@@ -1,6 +1,9 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
+const http = require('http');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -21,6 +24,16 @@ function saveDB() {
 let currentPeriod = "20261015024720";
 let timerSeconds = 30;
 
+// Initialize 20 Random Online Bots
+let botPhones = [];
+for(let i=1; i<=20; i++) {
+    let bPhone = "99999000" + (i < 10 ? "0" + i : i);
+    botPhones.push(bPhone);
+    if(!db.users[bPhone]) {
+        db.users[bPhone] = { phone: bPhone, password: "botpassword", balance: 50000, customId: "BOT" + i, referredBy: '', totalDeposit: 1000, totalWagered: 1000 };
+    }
+}
+
 setInterval(() => {
     let now = new Date();
     let seconds = now.getSeconds();
@@ -37,6 +50,15 @@ setInterval(() => {
         
         if (!db.history) db.history = [];
         db.history.unshift({ period: activePeriod, num: winNum, result: winResult });
+
+        // Simulate random bot bets for activity
+        if (!db.bets) db.bets = [];
+        botPhones.forEach(bp => {
+            let choices = ['Green', 'Red', 'Violet', 'Big', 'Small', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            let rChoice = choices[Math.floor(Math.random() * choices.length)];
+            let rAmt = [10, 50, 100][Math.floor(Math.random() * 3)];
+            db.bets.push({ phone: bp, amount: rAmt, choice: rChoice, multiplier: 1, period: currentPeriod, status: 'Pending', time: new Date() });
+        });
 
         if (db.bets) {
             db.bets.forEach(b => {
@@ -68,6 +90,14 @@ setInterval(() => {
     }
 }, 1000);
 
+// Self-Ping mechanism to keep Render server awake 24/7
+setInterval(() => {
+    let appUrl = process.env.RENDER_EXTERNAL_URL;
+    if (appUrl) {
+        https.get(appUrl, (res) => {}).on('error', (err) => {});
+    }
+}, 240000); // Ping every 4 minutes
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -95,7 +125,7 @@ app.get('/api/game-state', (req, res) => {
     if (!db.history) db.history = [];
     let phone = req.query.phone;
     let userBal = db.users[phone] ? db.users[phone].balance : undefined;
-    let myBets = (db.bets || []).filter(b => b.phone === phone).reverse();
+    let myBets = (db.bets || []).filter(b => b.phone === phone && !botPhones.includes(b.phone)).reverse();
     
     res.json({ 
         period: currentPeriod, 
@@ -162,7 +192,7 @@ app.post('/api/withdraw', (req, res) => {
     }
 
     if (!db.withdrawals) db.withdrawals = [];
-    db.withdrawals.push({ phone, amt: wdAddr = wdAmt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
+    db.withdrawals.push({ phone, amt: wdAmt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
     saveDB();
     res.json({ success: true, message: "Withdrawal request submitted successfully!" });
 });

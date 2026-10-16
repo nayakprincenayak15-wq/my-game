@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
 const DB_PATH = path.join(__dirname, 'db.json');
-let db = { users: {}, history: [], settings: { notice: 'Welcome to maan.win! Best color prediction game.' }, bets: [], deposits: [], withdrawals: [] };
+let db = { users: {}, history: [], settings: { notice: 'maan.win!' }, bets: [], deposits: [], withdrawals: [] };
 
 if (fs.existsSync(DB_PATH)) {
     try { db = { ...db, ...JSON.parse(fs.readFileSync(DB_PATH, 'utf8')) }; } catch(e){}
@@ -18,7 +18,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-let currentPeriod = "20261016000099";
+let currentPeriod = "20261015033733";
 let timerSeconds = 30;
 
 setInterval(() => {
@@ -71,12 +71,6 @@ app.post('/api/bet', (req, res) => {
     db.bets.push({ phone, amount, choice, period: currentPeriod, time: new Date() });
     saveDB();
     res.json({ success: true, message: "Bet placed successfully!" });
-});
-
-app.get('/api/user-bets', (req, res) => {
-    let phone = req.query.phone;
-    let list = (db.bets || []).filter(b => b.phone === phone).reverse();
-    res.json({ bets: list });
 });
 
 app.post('/api/deposit', (req, res) => {

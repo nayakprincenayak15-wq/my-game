@@ -254,7 +254,7 @@
                     html += `<div style="font-size:11px;">- ₹${dp.amount} (UTR: ${dp.utr}) -> <b style="color:${dp.status==='Approved'?'#22c55e':'#facc15'}">${dp.status}</b></div>`;
                 });
                 html += `<hr style="border-color:#1e2d54;"><div><b>💸 Total Withdrawals (${d.withdrawals.length}):</b></div>`;
-                d.withdrawals.forEach(wd => {
+                d.withdrawals.forEach((wd) => {
                     html += `<div style="font-size:11px;">- ₹${wd.amt} (${wd.bank || 'Bank'}) -> <b style="color:${wd.status==='Approved'?'#22c55e':'#ef4444'}">${wd.status}</b></div>`;
                 });
                 html += `<hr style="border-color:#1e2d54;"><div><b>⚖️ Balance Edit Logs (${(u.balanceLogs || []).length}):</b></div>`;
@@ -372,6 +372,19 @@
     window.addEventListener('load', () => {
         console.log("Admin Panel Loaded Safely.");
     });
+    </script>
+    
+    <script>
+    if (typeof window.viewBankDetails !== 'function') {
+        window.viewBankDetails = function(holder, bank, acc, ifsc) {
+            alert("🏦 USER BANK DETAILS:\n" +
+                  "-----------------------------------\n" +
+                  "Holder Name: " + (holder || 'N/A') + "\n" +
+                  "Bank Name: " + (bank || 'N/A') + "\n" +
+                  "Account No: " + (acc || 'N/A') + "\n" +
+                  "IFSC Code: " + (ifsc || 'N/A'));
+        };
+    }
     </script>
     </body>
 </html>

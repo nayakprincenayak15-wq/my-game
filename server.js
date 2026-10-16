@@ -44,7 +44,7 @@ setInterval(() => {
             db.bets.forEach(b => {
                 if (b.period === activePeriod && b.status === 'Pending') {
                     let isWin = false;
-                    let mult = b.multiplier || 1;
+                    let mult = b.multiplier || 2;
 
                     if (b.choice === 'Green' && (winNum % 2 !== 0 && winNum !== 5)) isWin = true;
                     else if (b.choice === 'Red' && (winNum % 2 === 0 && winNum !== 0)) isWin = true;

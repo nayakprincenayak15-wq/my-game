@@ -34,7 +34,7 @@ setInterval(() => {
         currentPeriod = p;
         
         let winNum = (forcedNum !== null && forcedNum !== undefined) ? forcedNum : Math.floor(Math.random() * 10);
-        forcedNum = null; // Auto reset forced result after applying once
+        forcedNum = null;
         let winResult = winNum >= 5 ? "Big" : "Small";
         
         if (!db.history) db.history = [];
@@ -76,7 +76,7 @@ app.post('/api/register', (req, res) => {
     if (!db.users) db.users = {};
     if (db.users[phone]) return res.json({ success: false, message: "Phone number already registered!" });
     let customId = "MW" + Math.floor(100000 + Math.random() * 900000);
-    db.users[phone] = { phone, password, balance: 0, customId, referredBy: referredBy || '', totalDeposit: 0, totalWagered: 0, blocked: false };
+    db.users[phone] = { phone, password, balance: 0, customId, referredBy: referredBy || '', totalDeposit: 0, totalWagered: 0, blocked: false, balanceLogs: [] };
     saveDB();
     res.json({ success: true, user: db.users[phone] });
 });
@@ -119,7 +119,6 @@ app.post('/api/deposit', (req, res) => {
     res.json({ success: true, message: "Deposit request submitted successfully!" });
 });
 
-// Instant Balance Deduction on Withdrawal Request
 app.post('/api/withdraw', (req, res) => {
     const { phone, amt, bank, holder, acc, ifsc } = req.body;
     let wdAmt = Number(amt);
@@ -132,9 +131,7 @@ app.post('/api/withdraw', (req, res) => {
     let totalWag = u.totalWagered || 0;
     if (totalWag < totalDep) return res.json({ success: false, message: `Please complete game play of remaining ₹${totalDep - totalWag} before withdrawal!` });
     
-    // Deduct balance instantly
     u.balance -= wdAmt;
-
     if (!db.withdrawals) db.withdrawals = [];
     db.withdrawals.push({ phone, amt: wdAmt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
     saveDB();
@@ -165,6 +162,7 @@ app.get('/api/admin/data', (req, res) => {
     if (req.query.key !== 'SEC_ADM_8899') return res.json({ success: false });
     let uList = Object.values(db.users || {});
     let curBets = (db.bets || []).filter(b => b.period === currentPeriod).reverse();
+    let refList = uList.filter(u => u.referredBy).map(u => ({ referrer: u.referredBy, referred: u.phone }));
     res.json({
         success: true,
         period: currentPeriod,
@@ -175,6 +173,7 @@ app.get('/api/admin/data', (req, res) => {
         users: uList,
         deposits: db.deposits || [],
         withdrawals: db.withdrawals || [],
+        referrals: refList,
         liveBets: curBets,
         settings: db.settings || {}
     });
@@ -187,6 +186,21 @@ app.get('/api/admin/user-details', (req, res) => {
     if (!u) return res.json({ success: false, message: "User not found!" });
     let uBets = (db.bets || []).filter(b => b.phone === phone).reverse();
     res.json({ success: true, user: u, bets: uBets });
+});
+
+app.post('/api/admin/edit-balance', (req, res) => {
+    if (req.body.key !== 'SEC_ADM_8899') return res.json({ success: false });
+    let { phone, amount } = req.body;
+    let u = db.users[phone];
+    if (u) {
+        u.balance += Number(amount);
+        if (!u.balanceLogs) u.balanceLogs = [];
+        u.balanceLogs.unshift({ type: amount >= 0 ? 'Admin Credit' : 'Admin Debit', amount: Math.abs(amount), time: new Date().toLocaleString() });
+        saveDB();
+        res.json({ success: true, message: "User balance updated successfully!" });
+    } else {
+        res.json({ success: false, message: "User not found!" });
+    }
 });
 
 app.post('/api/admin/force-result', (req, res) => {
@@ -214,13 +228,14 @@ app.post('/api/admin/update-deposit', (req, res) => {
             db.users[dep.phone].balance += Number(dep.amount);
             if (!db.users[dep.phone].totalDeposit) db.users[dep.phone].totalDeposit = 0;
             db.users[dep.phone].totalDeposit += Number(dep.amount);
+            if (!db.users[dep.phone].balanceLogs) db.users[dep.phone].balanceLogs = [];
+            db.users[dep.phone].balanceLogs.unshift({ type: 'Deposit Approved', amount: dep.amount, time: new Date().toLocaleString() });
         }
         saveDB();
     }
     res.json({ success: true, message: "Deposit " + status });
 });
 
-// Refund balance if withdrawal rejected
 app.post('/api/admin/update-withdraw', (req, res) => {
     if (req.body.key !== 'SEC_ADM_8899') return res.json({ success: false });
     let { index, status } = req.body;
@@ -229,6 +244,11 @@ app.post('/api/admin/update-withdraw', (req, res) => {
         wd.status = status;
         if (status === 'Rejected' && db.users[wd.phone]) {
             db.users[wd.phone].balance += Number(wd.amt); // Refund on rejection
+            if (!db.users[wd.phone].balanceLogs) db.users[wd.phone].balanceLogs = [];
+            db.users[wd.phone].balanceLogs.unshift({ type: 'Withdrawal Rejected (Refunded)', amount: wd.amt, time: new Date().toLocaleString() });
+        } else if (status === 'Approved' && db.users[wd.phone]) {
+            if (!db.users[wd.phone].balanceLogs) db.users[wd.phone].balanceLogs = [];
+            db.users[wd.phone].balanceLogs.unshift({ type: 'Withdrawal Approved', amount: wd.amt, time: new Date().toLocaleString() });
         }
         saveDB();
     }

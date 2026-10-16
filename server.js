@@ -23,49 +23,49 @@ let timerSeconds = 30;
 
 setInterval(() => {
     let now = new Date();
-    timerSeconds = 30 - (now.getSeconds() % 30);
-    let p = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + Math.floor((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 30).toString().padStart(6, '0');
+    let seconds = now.getSeconds();
+    timerSeconds = 30 - (seconds % 30);
     
-    if (timerSeconds === 30) {
-        if (currentPeriod !== p) {
-            currentPeriod = p;
-            let winNum = Math.floor(Math.random() * 10);
-            let winResult = winNum >= 5 ? "Big" : "Small";
-            
-            if (!db.history) db.history = [];
-            db.history.unshift({ period: currentPeriod, num: winNum, result: winResult });
+    let p = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + Math.floor((now.getHours() * 3600 + now.getMinutes() * 60 + seconds) / 30).toString().padStart(6, '0');
+    
+    if (currentPeriod !== p) {
+        let activePeriod = currentPeriod;
+        currentPeriod = p;
+        
+        let winNum = Math.floor(Math.random() * 10);
+        let winResult = winNum >= 5 ? "Big" : "Small";
+        
+        if (!db.history) db.history = [];
+        db.history.unshift({ period: activePeriod, num: winNum, result: winResult });
 
-            // Evaluate bets for this period
-            if (db.bets) {
-                db.bets.forEach(b => {
-                    if (b.period === currentPeriod && b.status === 'Pending') {
-                        let isWin = false;
-                        let mult = b.multiplier || 1;
+        if (db.bets) {
+            db.bets.forEach(b => {
+                if (b.period === activePeriod && b.status === 'Pending') {
+                    let isWin = false;
+                    let mult = b.multiplier || 1;
 
-                        if (b.choice === 'Green' && (winNum % 2 !== 0 && winNum !== 5)) isWin = true;
-                        else if (b.choice === 'Red' && (winNum % 2 === 0 && winNum !== 0)) isWin = true;
-                        else if (b.choice === 'Violet' && (winNum === 0 || winNum === 5)) isWin = true;
-                        else if (b.choice === 'Big' && winResult === 'Big') isWin = true;
-                        else if (b.choice === 'Small' && winResult === 'Small') isWin = true;
-                        else if (b.choice === winNum.toString()) isWin = true;
+                    if (b.choice === 'Green' && (winNum % 2 !== 0 && winNum !== 5)) isWin = true;
+                    else if (b.choice === 'Red' && (winNum % 2 === 0 && winNum !== 0)) isWin = true;
+                    else if (b.choice === 'Violet' && (winNum === 0 || winNum === 5)) isWin = true;
+                    else if (b.choice === 'Big' && winResult === 'Big') isWin = true;
+                    else if (b.choice === 'Small' && winResult === 'Small') isWin = true;
+                    else if (b.choice === winNum.toString()) isWin = true;
 
-                        if (isWin) {
-                            b.status = 'Win';
-                            b.winAmt = b.amount * mult;
-                            if (db.users[b.phone]) {
-                                db.users[b.phone].balance += b.winAmt;
-                            }
-                        } else {
-                            b.status = 'Loss';
-                            b.winAmt = 0;
+                    if (isWin) {
+                        b.status = 'Win';
+                        b.winAmt = b.amount * mult;
+                        if (db.users[b.phone]) {
+                            db.users[b.phone].balance += b.winAmt;
                         }
+                    } else {
+                        b.status = 'Loss';
+                        b.winAmt = 0;
                     }
-                });
-            }
-            saveDB();
+                }
+            });
         }
+        saveDB();
     }
-    timerSeconds = 30 - (now.getSeconds() % 30);
 }, 1000);
 
 app.get('/', (req, res) => {
@@ -123,7 +123,6 @@ app.post('/api/deposit', (req, res) => {
     if (!db.deposits) db.deposits = [];
     db.deposits.push({ phone, amount, utr, status: 'Pending', time: new Date() });
     
-    // Check referral bonus if first deposit
     let user = db.users[phone];
     if (user && user.referredBy) {
         let userDeps = db.deposits.filter(d => d.phone === phone && d.status === 'Approved');

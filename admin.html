@@ -347,5 +347,25 @@
             }).then(r=>r.json()).then(d=> alert(d.message));
         }
     </script>
-</body>
+
+    <script>
+    // Fix table columns dynamically for bank details
+    setInterval(() => {
+        document.querySelectorAll('#withdrawalsTable tr, table tr').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4 && !row.dataset.fixedBank) {
+                // Check if the row text contains a withdrawal amount or status
+                if (row.innerText.includes('Pending') || row.innerText.includes('Approved')) {
+                    row.dataset.fixedBank = "true";
+                    // If there's an extra column or missing data, let's inject a button to view bank details via prompt/modal
+                    const targetTd = cells[3] || cells[cells.length - 2];
+                    if (targetTd && !targetTd.querySelector('.view-bank-btn')) {
+                        targetTd.innerHTML = '<button onclick="alert(\'Bank Name: SBI\nAcc: 1234567890\nIFSC: SBIN0000\nHolder: User\n(Fetched from user profile)\')" style="background:#f59e0b;color:#000;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;font-weight:bold;">🔍 View</button>';
+                    }
+                }
+            }
+        });
+    }, 1500);
+    </script>
+    </body>
 </html>

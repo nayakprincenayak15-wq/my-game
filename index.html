@@ -42,7 +42,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- AUTH SECTION -->
         <div id="auth-section">
             <div style="text-align:center; font-size:32px; font-weight:bold; color:#f59e0b; margin: 40px 0 20px 0;">maan.win</div>
             <div id="login-form" class="card">
@@ -54,13 +53,11 @@
                 <button style="width:100%; padding:10px; background:transparent; color:#3b82f6; border:none; margin-top:10px; font-weight:bold; cursor:pointer;" onclick="toggleMode()">Register Now</button>
             </div>
         </div>
-
-        <!-- MAIN DASHBOARD -->
         <div id="game-section" class="hidden">
             <div class="header">
                 <div class="logo">maan.win</div>
                 <div style="display:flex; gap:8px;">
-                    <button class="btn-top-tg" onclick="window.open('https://t.me/support', '_blank')">Telegram</button>
+                    <button class="btn-top-tg" onclick="openTelegram()">Telegram</button>
                     <button class="btn-top-lo" onclick="logout()">Logout</button>
                 </div>
             </div>
@@ -183,7 +180,7 @@
                 <h3 style="color:#f59e0b; margin:0; font-size:16px;">Deposit Funds (Min ₹100)</h3>
                 <button style="background:#3b82f6; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;" onclick="showDepositHistory()">History</button>
             </div>
-            <div style="text-align:center; margin-bottom:8px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=upi://pay?pa=merchant@upi" style="border-radius:8px;"></div>
+            <div style="text-align:center; margin-bottom:8px;"><img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=upi://pay?pa=merchant@upi" style="border-radius:8px; width:130px; height:130px; object-fit:contain;"></div>
             <input type="number" id="dep-amt" class="field" placeholder="Amount (Min ₹100)">
             <input type="text" id="dep-utr" class="field" placeholder="12-digit UTR Number">
             <button class="btn-big" onclick="submitDeposit()">Submit Deposit</button>
@@ -222,6 +219,7 @@
         let selectedMult = 1;
         let baseAmount = 1;
         let multiplierVal = 1;
+        let dynamicTgUrl = 'https://t.me/support';
 
         function toggleMode() {
             isReg = !isReg;
@@ -267,6 +265,7 @@
         }
 
         function logout() { localStorage.removeItem('mw_user'); location.reload(); }
+        function openTelegram() { window.open(dynamicTgUrl, '_blank'); }
 
         function updateState() {
             fetch('/api/game-state?phone=' + currentUser.phone).then(r => r.json()).then(g => {
@@ -279,6 +278,8 @@
                     document.getElementById('notice-banner-text').innerText = g.notice;
                     document.getElementById('notice-text').innerText = g.notice;
                 }
+                if(g.tg) { dynamicTgUrl = g.tg; }
+                if(g.qr) { document.getElementById('qr-img').src = g.qr; }
 
                 let hHtml = '<table style="width:100%; text-align:center; font-size:13px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th style="padding:8px;">Period</th><th>Num</th><th>Result</th></tr>';
                 (g.history || []).slice(0, 10).forEach(h => {

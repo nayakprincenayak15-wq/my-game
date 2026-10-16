@@ -149,277 +149,37 @@
             </div>
         </div>
     </div>
-    <script>
-        let admKey = '';
-        function loginAdmin() {
-            let u = document.getElementById('adm-user').value;
-            let p = document.getElementById('adm-pass').value;
-            fetch('/api/admin/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ username: u, password: p })
-            }).then(r=>r.json()).then(d=> {
-                if(d.success) {
-                    admKey = d.key;
-                    document.getElementById('login-box').classList.add('hidden');
-                    document.getElementById('admin-dash').classList.remove('hidden');
-                    setInterval(loadAdminData, 2000);
-                    loadAdminData();
-                } else { alert(d.message); }
-            });
-        }
-
-        function loadAdminData() {
-            fetch('/api/admin/data?key=' + admKey).then(r=>r.json()).then(d=> {
-                if(!d.success) return;
-                document.getElementById('st-online').innerText = (d.onlineUsers || 0) + 20;
-                document.getElementById('st-reg').innerText = d.totalReg || 0;
-                let m = Math.floor(d.timer/60).toString().padStart(2,'0');
-                let s = (d.timer%60).toString().padStart(2,'0');
-                document.getElementById('st-timer').innerText = m + ':' + s;
-                document.getElementById('cur-period').innerText = d.period;
-                document.getElementById('active-force').innerText = d.forcedResult !== null ? d.forcedResult : 'None';
-
-                if(d.forcedResult === null) {
-                    document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('selected'));
-                }
-
-                if(!document.getElementById('adm-notice').value) document.getElementById('adm-notice').value = d.settings.notice || '';
-                if(!document.getElementById('adm-tg').value) document.getElementById('adm-tg').value = d.settings.tg || '';
-
-                // Referrals Table
-                let refHtml = '<table><tr><th>Referrer</th><th>Referred User</th><th>Bank Details</th><th>Action</th></tr>';
-                (d.referrals || []).forEach(rf => {
-                    refHtml += `<tr><td>${rf.referrer}</td><td>${rf.referred}</td><td><button class="btn btn-orange" style="padding:2px 5px; font-size:10px;" onclick="giveRefBonus('${rf.referrer}', '${rf.referred}')">Give 10% Bonus</button></td></tr>`;
-                });
-                document.getElementById('referrals-list').innerHTML = refHtml + '</table>';
-
-                // Users Table
-                let uHtml = '<table><tr><th>Phone</th><th>Bal</th><th>Status</th><th>Edit Bal</th><th>Bank Details</th><th>Action</th></tr>';
-                (d.users || []).forEach(u => {
-                    uHtml += `<tr><td>${u.phone}</td><td>₹${Number(u.balance).toFixed(2)}</td><td>${u.blocked?'Blocked':'Active'}</td><td><button class="btn btn-blue" style="padding:2px 5px; font-size:10px;" onclick="editBalance('${u.phone}')">Edit</button></td><td><button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="toggleBlock('${u.phone}')">${u.blocked?'Unblock':'Block'}</button></td></tr>`;
-                });
-                document.getElementById('users-list').innerHTML = uHtml + '</table>';
-
-                // Deposits Table
-                let depHtml = '<table><tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Bank Details</th><th>Action</th></tr>';
-                (d.deposits || []).forEach((dp, idx) => {
-                    depHtml += `<tr><td>${dp.phone}</td><td>₹${dp.amount}</td><td>${dp.utr}</td><td>${dp.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px; font-size:10px;" onclick="updateDep(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="updateDep(${idx}, 'Rejected')">Reject</button>` : dp.status}</td></tr>`;
-                });
-                document.getElementById('deposits-list').innerHTML = depHtml + '</table>';
-
-                // Withdrawals Table
-                let wdHtml = '<table><tr><th>Phone</th><th>Amt</th><th>Status</th><th>Bank Details</th><th>Action</th></tr>';
-                (d.withdrawals || []).forEach((wd, idx) => {
-                    wdHtml += `<tr><td>${wd.phone}</td><td>₹${wd.amt}</td><td>${wd.status}</td><td>${wd.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px; font-size:10px;" onclick="updateWd(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="updateWd(${idx}, 'Rejected')">Reject</button>` : wd.status}</td></tr>`;
-                });
-                document.getElementById('withdraws-list').innerHTML = wdHtml + '</table>';
-
-                // Live Bets Table
-                let bHtml = '<table><tr><th>Phone</th><th>Select</th><th>Amt</th><th>Status</th></tr>';
-                (d.liveBets || []).slice(0, 10).forEach(b => {
-                    bHtml += `<tr><td>${b.phone}</td><td>${b.choice}</td><td>₹${b.amount}</td><td>${b.status}</td></tr>`;
-                });
-                document.getElementById('live-bets-list').innerHTML = bHtml + '</table>';
-            });
-        }
-
-        function setForceNum(num, btn) {
-            document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            fetch('/api/admin/force-result', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, num: num })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function setForceChoice(choice) {
-            let num = choice === 'Green' ? 1 : (choice === 'Violet' ? 0 : 2);
-            fetch('/api/admin/force-result', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, num: num })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function setForceBS(bs) {
-            let num = bs === 'Big' ? 7 : 3;
-            fetch('/api/admin/force-result', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, num: num })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function searchUser() {
-            let phone = document.getElementById('search-phone').value;
-            if(!phone) return alert("Enter phone number!");
-            fetch(`/api/admin/user-details?key=${admKey}&phone=${phone}`).then(r=>r.json()).then(d=> {
-                if(!d.success) return alert(d.message);
-                let u = d.user;
-                let html = `<div style="background:#0b1329; padding:10px; border-radius:8px;">
-                    <div><b>Phone:</b> ${u.phone} | <b>Balance:</b> ₹${Number(u.balance).toFixed(2)}</div>
-                    <div><b>Referred By:</b> ${u.referredBy || 'None'}</div>
-                    <hr style="border-color:#1e2d54;">
-                    <div><b>💰 Total Deposits (${d.deposits.length}):</b></div>`;
-                d.deposits.forEach(dp => {
-                    html += `<div style="font-size:11px;">- ₹${dp.amount} (UTR: ${dp.utr}) -> <b style="color:${dp.status==='Approved'?'#22c55e':'#facc15'}">${dp.status}</b></div>`;
-                });
-                html += `<hr style="border-color:#1e2d54;"><div><b>💸 Total Withdrawals (${d.withdrawals.length}):</b></div>`;
-                d.withdrawals.forEach(wd => {
-                    html += `<div style="font-size:11px;">- ₹${wd.amt} (${wd.bank || 'Bank'}) -> <b style="color:${wd.status==='Approved'?'#22c55e':'#ef4444'}">${wd.status}</b></div>`;
-                });
-                html += `<hr style="border-color:#1e2d54;"><div><b>⚖️ Balance Edit Logs (${(u.balanceLogs || []).length}):</b></div>`;
-                (u.balanceLogs || []).forEach(log => {
-                    html += `<div style="font-size:11px; color:#f59e0b;">- [${log.type}] ₹${log.amount} (${log.time})</div>`;
-                });
-                html += `<hr style="border-color:#1e2d54;"><div><b>🎮 All Bets History (${d.bets.length}):</b></div>`;
-                d.bets.forEach(b => {
-                    html += `<div style="font-size:11px;">- Period ${b.period}: Selected <b>${b.choice}</b> (₹${b.amount}) -> <b style="color:${b.status==='Win'?'#22c55e':'#ef4444'}">${b.status} ${b.winAmt ? '₹'+b.winAmt : ''}</b></div>`;
-                });
-                html += `</div>`;
-                document.getElementById('search-results').innerHTML = html;
-            });
-        }
-
-        function editBalance(phone) {
-            let amt = prompt("Enter amount to add (positive) or deduct (negative like -100):");
-            if(!amt || isNaN(amt)) return;
-            fetch('/api/admin/edit-balance', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, phone: phone, amount: Number(amt) })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function giveRefBonus(refPhone, userPhone) {
-            let amt = prompt("Enter referral bonus amount for " + refPhone, "50");
-            if(!amt || isNaN(amt)) return;
-            fetch('/api/admin/edit-balance', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, phone: refPhone, amount: Number(amt) })
-            }).then(r=>r.json()).then(d=> alert("Referral bonus credited successfully!"));
-        }
-
-        function saveNotice() {
-            let n = document.getElementById('adm-notice').value;
-            fetch('/api/admin/settings', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, notice: n })
-            }).then(r=>r.json()).then(d=> alert("Notice updated!"));
-        }
-
-        function saveSettings() {
-            let tg = document.getElementById('adm-tg').value;
-            let fileInput = document.getElementById('adm-qr-file');
-            
-            if(fileInput.files.length > 0) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    let qrData = e.target.result;
-                    fetch('/api/admin/settings', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ key: admKey, tg: tg, qr: qrData })
-                    }).then(r=>r.json()).then(d=> alert("Telegram Link & QR Image Uploaded & Saved Live!"));
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                fetch('/api/admin/settings', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ key: admKey, tg: tg })
-                }).then(r=>r.json()).then(d=> alert("Telegram Link Saved Live!"));
-            }
-        }
-
-        function updateDep(idx, status) {
-            fetch('/api/admin/update-deposit', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, index: idx, status: status })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function updateWd(idx, status) {
-            fetch('/api/admin/update-withdraw', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, index: idx, status: status })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-
-        function toggleBlock(phone) {
-            fetch('/api/admin/toggle-block', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, phone: phone })
-            }).then(r=>r.json()).then(d=> alert(d.message));
-        }
-    </script>
-
-    <script>
-    // Fix table columns dynamically for bank details
-    setInterval(() => {
-        document.querySelectorAll('#withdrawalsTable tr, table tr').forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 4 && !row.dataset.fixedBank) {
-                // Check if the row text contains a withdrawal amount or status
-                if (row.innerText.includes('Pending') || row.innerText.includes('Approved')) {
-                    row.dataset.fixedBank = "true";
-                    // If there's an extra column or missing data, let's inject a button to view bank details via prompt/modal
-                    const targetTd = cells[3] || cells[cells.length - 2];
-                    if (targetTd && !targetTd.querySelector('.view-bank-btn')) {
-                        targetTd.innerHTML = '<button onclick="alert(\'Bank Name: SBI\nAcc: 1234567890\nIFSC: SBIN0000\nHolder: User\n(Fetched from user profile)\')" style="background:#f59e0b;color:#000;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;font-weight:bold;">🔍 View</button>';
-                    }
-                }
-            }
-        });
-    }, 1500);
-    </script>
     
-    <script>
-    window.addEventListener('load', () => {
-        console.log("Admin Panel Loaded Safely.");
-    });
-    </script>
     
+
     <script>
     function fetchUserBankDetails() {
-        const phoneInput = document.getElementById('bankSearchPhone');
+        const phone = document.getElementById('bankSearchPhone').value.trim();
         const display = document.getElementById('bankDetailsDisplay');
-        if (!phoneInput) return;
-        const phone = phoneInput.value.trim();
         if (!phone) {
-            alert("Kripya Phone Number darj karein!");
+            alert("Kripya Phone Number dalein!");
             return;
         }
-        
         display.style.display = 'block';
         display.innerHTML = '<div style="color:#f59e0b;">Fetching bank details...</div>';
 
-        fetch('/api/admin/bank-info?key=' + (window.admKey || '') + '&phone=' + encodeURIComponent(phone))
+        fetch('/api/admin/bank-info?phone=' + encodeURIComponent(phone))
             .then(res => res.json())
             .then(data => {
                 if (data && data.success && data.bank) {
                     display.innerHTML = `
-                        <div style="color:#10b981; font-weight:bold; margin-bottom:8px;">✅ User Bank Details (${data.phone}):</div>
-                        <div style="line-height:1.6;">
-                            <b>Account Holder:</b> ${data.bank.holder || 'N/A'}<br>
-                            <b>Bank Name:</b> ${data.bank.bankName || 'N/A'}<br>
-                            <b>Account Number:</b> ${data.bank.accountNumber || 'N/A'}<br>
-                            <b>IFSC Code:</b> ${data.bank.ifsc || 'N/A'}
-                        </div>
+                        <div style="color:#10b981; font-weight:bold; margin-bottom:5px;">✅ Bank Details Found:</div>
+                        <b>Holder Name:</b> ${data.bank.holder || 'N/A'}<br>
+                        <b>Bank Name:</b> ${data.bank.bankName || 'N/A'}<br>
+                        <b>Account No:</b> ${data.bank.accountNumber || 'N/A'}<br>
+                        <b>IFSC Code:</b> ${data.bank.ifsc || 'N/A'}
                     `;
                 } else {
-                    display.innerHTML = '<div style="color:#ef4444;">❌ Details nahi mili. Account missing or empty.</div>';
+                    display.innerHTML = '<div style="color:#ef4444;">❌ Is number ki bank details nahi mili.</div>';
                 }
             })
             .catch(err => {
-                display.innerHTML = '<div style="color:#ef4444;">❌ Request Failed. Retrying...</div>';
+                display.innerHTML = '<div style="color:#ef4444;">❌ Server connection error.</div>';
             });
     }
     </script>

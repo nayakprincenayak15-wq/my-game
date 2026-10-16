@@ -1,0 +1,12 @@
+{
+  "name": "maan-win",
+  "version": "1.0.0",
+  "description": "Maan Win Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

@@ -55,7 +55,8 @@ setInterval(() => {
 
                     if (isWin) {
                         b.status = 'Win';
-                        b.winAmt = b.amount * mult;
+                        let finalMult = Number(b.multiplier) > 1 ? Number(b.multiplier) : 2;
+                                  b.winAmt = Number(b.amount) * finalMult;
                         if (db.users[b.phone]) db.users[b.phone].balance += b.winAmt;
                     } else {
                         b.status = 'Loss';

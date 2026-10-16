@@ -17,7 +17,7 @@
         .bal-amount { font-size: 28px; font-weight: bold; color: #ffffff; }
         .refer-btn { background: transparent; color: #ffffff; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: bold; }
         .notice-btn { background: #f59e0b; color: #000000; border: 1px solid #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
-        .notice-banner { border: 1px solid #f59e0b; border-radius: 6px; padding: 6px; font-size: 12px; color: #22c55e; margin-top: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+        .notice-banner { border: 1px solid #f59e0b; border-radius: 6px; padding: 6px; font-size: 12px; color: #22c55e; margin-top: 10px; overflow: hidden; white-space: nowrap; text-align: left; background: #0f172a; }
         .btn-dep { background-color: #22c55e; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-wd { background-color: #ef4444; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
         .timer-box { font-size: 42px; font-weight: bold; color: #22c55e; text-align: center; margin: 5px 0; }
@@ -33,9 +33,11 @@
         .modal-content { background: #131d38; padding: 15px; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 420px; border: 1px solid #1e2d54; box-sizing: border-box; }
         .chip { padding: 6px 12px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid #3b82f6; cursor: pointer; font-weight: bold; text-align: center; }
         .chip.active { background: #22c55e; border-color: #22c55e; }
-        .status-pending { color: #ef4444; font-weight: bold; }
-        .status-approved { color: #22c55e; font-weight: bold; }
+        .status-pending { color: #facc15; font-weight: bold; }
+        .status-approved, .status-win { color: #22c55e; font-weight: bold; }
+        .status-loss { color: #ef4444; font-weight: bold; }
         input.field { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #2a3c68; background-color: #0b1329; color: #fff; box-sizing: border-box; margin-bottom: 12px; }
+        .share-btn { width: 100%; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 8px; color: #fff; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -53,7 +55,7 @@
             </div>
         </div>
 
-        <!-- MAIN EXACT MATCH DASHBOARD -->
+        <!-- MAIN DASHBOARD -->
         <div id="game-section" class="hidden">
             <div class="header">
                 <div class="logo">maan.win</div>
@@ -80,7 +82,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="notice-banner" id="notice-banner">maan.win!</div>
+                <div class="notice-banner"><marquee id="notice-banner-text">maan.win!</marquee></div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
@@ -99,16 +101,16 @@
                 </div>
 
                 <div class="grid-num">
-                    <button class="num-btn btn-violet-bg" onclick="openBetModal('0', 11)">0</button>
-                    <button class="num-btn btn-green-bg" onclick="openBetModal('1', 20)">1</button>
-                    <button class="num-btn btn-red-bg" onclick="openBetModal('2', 30)">2</button>
-                    <button class="num-btn btn-green-bg" onclick="openBetModal('3', 4)">3</button>
-                    <button class="num-btn btn-red-bg" onclick="openBetModal('4', 5)">4</button>
-                    <button class="num-btn btn-violet-bg" onclick="openBetModal('5', 60)">5</button>
-                    <button class="num-btn btn-red-bg" onclick="openBetModal('6', 70)">6</button>
-                    <button class="num-btn btn-green-bg" onclick="openBetModal('7', 80)">7</button>
-                    <button class="num-btn btn-red-bg" onclick="openBetModal('8', 90)">8</button>
-                    <button class="num-btn btn-green-bg" onclick="openBetModal('9', 10)">9</button>
+                    <button class="num-btn btn-violet-bg" onclick="openBetModal('0', 10)">0</button>
+                    <button class="num-btn btn-green-bg" onclick="openBetModal('1', 5)">1</button>
+                    <button class="num-btn btn-red-bg" onclick="openBetModal('2', 10)">2</button>
+                    <button class="num-btn btn-green-bg" onclick="openBetModal('3', 15)">3</button>
+                    <button class="num-btn btn-red-bg" onclick="openBetModal('4', 20)">4</button>
+                    <button class="num-btn btn-violet-bg" onclick="openBetModal('5', 25)">5</button>
+                    <button class="num-btn btn-red-bg" onclick="openBetModal('6', 30)">6</button>
+                    <button class="num-btn btn-green-bg" onclick="openBetModal('7', 35)">7</button>
+                    <button class="num-btn btn-red-bg" onclick="openBetModal('8', 40)">8</button>
+                    <button class="num-btn btn-green-bg" onclick="openBetModal('9', 45)">9</button>
                 </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
@@ -120,6 +122,11 @@
             <div class="card">
                 <div style="color:#f59e0b; font-weight:bold; margin-bottom:10px; font-size:16px;">Game History</div>
                 <div id="history-list">Loading...</div>
+            </div>
+
+            <div class="card">
+                <div style="color:#f59e0b; font-weight:bold; margin-bottom:10px; font-size:16px;">My Activity History</div>
+                <div id="activity-list" style="font-size:12px; color:#94a3b8;">No activity yet</div>
             </div>
         </div>
     </div>
@@ -145,7 +152,7 @@
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <button class="btn-wd" onclick="closeModal('bet-modal')" style="width:38%; padding:10px;">Cancel</button>
-                <button class="btn-dep" onclick="confirmBet()" style="width:58%; padding:10px;">Total Amount ₹<span id="total-bet-amt">1.00</span></button>
+                <button class="btn-dep" onclick="confirmBet()" style="width:58%; padding:10px;">Total ₹<span id="total-bet-amt">1.00</span></button>
             </div>
         </div>
     </div>
@@ -160,9 +167,11 @@
 
     <div id="refer-modal" class="modal hidden">
         <div class="modal-content" style="margin:auto; border-radius:12px;">
-            <h3 style="color:#3b82f6; margin-top:0;">Refer & Earn</h3>
-            <p style="font-size:12px; color:#cbd5e1;">Get 10% bonus on friend's deposit!</p>
+            <h3 style="color:#3b82f6; margin-top:0;">Refer & Earn (10% Bonus)</h3>
+            <p style="font-size:12px; color:#cbd5e1;">Share your link and earn 10% on friend's first deposit!</p>
             <input type="text" id="refer-link" class="field" readonly>
+            <button class="share-btn" style="background:#25D366;" onclick="shareWhatsApp()">Share on WhatsApp</button>
+            <button class="share-btn" style="background:#0088cc;" onclick="shareTelegram()">Share on Telegram</button>
             <button class="btn-dep" onclick="copyRefer()">Copy Link</button>
             <button class="btn-wd" onclick="closeModal('refer-modal')" style="margin-top:8px;">Close</button>
         </div>
@@ -210,6 +219,7 @@
         let isReg = false;
         let currentUser = null;
         let selectedChoice = '';
+        let selectedMult = 1;
         let baseAmount = 1;
         let multiplierVal = 1;
 
@@ -224,6 +234,9 @@
             let phone = document.getElementById('phone').value;
             let password = document.getElementById('password').value;
             let cpassword = document.getElementById('cpassword').value;
+            let urlParams = new URLSearchParams(window.location.search);
+            let referredBy = urlParams.get('ref') || '';
+
             if(!phone || phone.length < 10) { alert("Enter valid 10-digit phone number!"); return; }
             if(password.length < 8) { alert("Password must be at least 8 characters!"); return; }
             if(isReg && password !== cpassword) { alert("Passwords do not match!"); return; }
@@ -231,7 +244,7 @@
             fetch(isReg ? '/api/register' : '/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone, password })
+                body: JSON.stringify({ phone, password, referredBy })
             }).then(r => r.json()).then(data => {
                 if(data.success) {
                     localStorage.setItem('mw_user', JSON.stringify(data.user));
@@ -256,14 +269,14 @@
         function logout() { localStorage.removeItem('mw_user'); location.reload(); }
 
         function updateState() {
-            fetch('/api/game-state').then(r => r.json()).then(g => {
+            fetch('/api/game-state?phone=' + currentUser.phone).then(r => r.json()).then(g => {
                 document.getElementById('period-val').innerText = g.period;
                 let m = Math.floor(g.timer/60).toString().padStart(2,'0');
                 let s = (g.timer%60).toString().padStart(2,'0');
                 document.getElementById('timer-val').innerText = m + ':' + s;
                 
                 if(g.notice) {
-                    document.getElementById('notice-banner').innerText = g.notice;
+                    document.getElementById('notice-banner-text').innerText = g.notice;
                     document.getElementById('notice-text').innerText = g.notice;
                 }
 
@@ -274,11 +287,27 @@
                 });
                 hHtml += '</table>';
                 document.getElementById('history-list').innerHTML = hHtml;
+
+                if(g.userBalance !== undefined) {
+                    currentUser.balance = g.userBalance;
+                    document.getElementById('user-bal').innerText = "₹" + Number(currentUser.balance).toFixed(2);
+                    localStorage.setItem('mw_user', JSON.stringify(currentUser));
+                }
+
+                let aHtml = '<table style="width:100%; text-align:center; font-size:12px; border-collapse:collapse;"><tr style="color:#f59e0b; border-bottom:1px solid #2a3c68;"><th style="padding:6px;">Period</th><th>Choice</th><th>Amt</th><th>Status</th></tr>';
+                (g.myBets || []).slice(0, 8).forEach(b => {
+                    let stClass = b.status === 'Pending' ? 'status-pending' : (b.status === 'Win' ? 'status-win' : 'status-loss');
+                    let stText = b.status === 'Pending' ? 'Pending' : (b.status === 'Win' ? 'Win ₹' + b.winAmt : 'Loss');
+                    aHtml += '<tr style="border-bottom:1px solid #1e2d54; height:30px;"><td>' + b.period + '</td><td>' + b.choice + '</td><td>₹' + b.amount + '</td><td class="' + stClass + '">' + stText + '</td></tr>';
+                });
+                aHtml += '</table>';
+                document.getElementById('activity-list').innerHTML = aHtml || 'No bets placed yet';
             });
         }
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
         function copyRefer() {
             let copyText = document.getElementById('refer-link');
             copyText.select();
@@ -286,8 +315,19 @@
             alert("Referral link copied!");
         }
 
+        function shareWhatsApp() {
+            let url = document.getElementById('refer-link').value;
+            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent('Join maan.win game using my link: ' + url), '_blank');
+        }
+
+        function shareTelegram() {
+            let url = document.getElementById('refer-link').value;
+            window.open('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent('Join maan.win game!'), '_blank');
+        }
+
         function openBetModal(choice, mult) {
             selectedChoice = choice;
+            selectedMult = mult;
             document.getElementById('bet-choice-title').innerText = "Select " + choice;
             openModal('bet-modal');
         }
@@ -315,7 +355,7 @@
             fetch('/api/bet', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ phone: currentUser.phone, amount: totalAmt, choice: selectedChoice })
+                body: JSON.stringify({ phone: currentUser.phone, amount: totalAmt, choice: selectedChoice, multiplier: selectedMult })
             }).then(r => r.json()).then(d => {
                 alert(d.message);
                 if(d.success) {

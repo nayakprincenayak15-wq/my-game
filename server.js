@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
 const DB_PATH = path.join(__dirname, 'db.json');
-let db = { users: {}, history: [], settings: { notice: 'maan.win!' }, bets: [], deposits: [], withdrawals: [] };
+let db = { users: {}, history: [], settings: { notice: 'Welcome to maan.win! Best Color Prediction Platform.' }, bets: [], deposits: [], withdrawals: [] };
 
 if (fs.existsSync(DB_PATH)) {
     try { db = { ...db, ...JSON.parse(fs.readFileSync(DB_PATH, 'utf8')) }; } catch(e){}
@@ -18,7 +18,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-let currentPeriod = "20261015033733";
+let currentPeriod = "20261016000522";
 let timerSeconds = 30;
 
 setInterval(() => {
@@ -27,13 +27,45 @@ setInterval(() => {
     let p = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + Math.floor((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 30).toString().padStart(6, '0');
     
     if (timerSeconds === 30) {
-        let winNum = Math.floor(Math.random() * 10);
-        let winResult = winNum >= 5 ? "Big" : "Small";
-        if (!db.history) db.history = [];
-        db.history.unshift({ period: currentPeriod, num: winNum, result: winResult });
-        saveDB();
+        if (currentPeriod !== p) {
+            currentPeriod = p;
+            let winNum = Math.floor(Math.random() * 10);
+            let winResult = winNum >= 5 ? "Big" : "Small";
+            
+            if (!db.history) db.history = [];
+            db.history.unshift({ period: currentPeriod, num: winNum, result: winResult });
+
+            // Evaluate bets for this period
+            if (db.bets) {
+                db.bets.forEach(b => {
+                    if (b.period === currentPeriod && b.status === 'Pending') {
+                        let isWin = false;
+                        let mult = b.multiplier || 1;
+
+                        if (b.choice === 'Green' && (winNum % 2 !== 0 && winNum !== 5)) isWin = true;
+                        else if (b.choice === 'Red' && (winNum % 2 === 0 && winNum !== 0)) isWin = true;
+                        else if (b.choice === 'Violet' && (winNum === 0 || winNum === 5)) isWin = true;
+                        else if (b.choice === 'Big' && winResult === 'Big') isWin = true;
+                        else if (b.choice === 'Small' && winResult === 'Small') isWin = true;
+                        else if (b.choice === winNum.toString()) isWin = true;
+
+                        if (isWin) {
+                            b.status = 'Win';
+                            b.winAmt = b.amount * mult;
+                            if (db.users[b.phone]) {
+                                db.users[b.phone].balance += b.winAmt;
+                            }
+                        } else {
+                            b.status = 'Loss';
+                            b.winAmt = 0;
+                        }
+                    }
+                });
+            }
+            saveDB();
+        }
     }
-    currentPeriod = p;
+    timerSeconds = 30 - (now.getSeconds() % 30);
 }, 1000);
 
 app.get('/', (req, res) => {
@@ -41,11 +73,12 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/register', (req, res) => {
-    const { phone, password } = req.body;
+    const { phone, password, referredBy } = req.body;
     if (!db.users) db.users = {};
     if (db.users[phone]) return res.json({ success: false, message: "Phone number already registered!" });
+    
     let customId = "MW" + Math.floor(100000 + Math.random() * 900000);
-    db.users[phone] = { phone, password, balance: 100, customId };
+    db.users[phone] = { phone, password, balance: 100, customId, referredBy: referredBy || '' };
     saveDB();
     res.json({ success: true, user: db.users[phone] });
 });
@@ -60,15 +93,26 @@ app.post('/api/login', (req, res) => {
 
 app.get('/api/game-state', (req, res) => {
     if (!db.history) db.history = [];
-    res.json({ period: currentPeriod, timer: timerSeconds, history: db.history, notice: db.settings.notice });
+    let phone = req.query.phone;
+    let userBal = db.users[phone] ? db.users[phone].balance : undefined;
+    let myBets = (db.bets || []).filter(b => b.phone === phone).reverse();
+    
+    res.json({ 
+        period: currentPeriod, 
+        timer: timerSeconds, 
+        history: db.history, 
+        notice: db.settings.notice,
+        userBalance: userBal,
+        myBets: myBets
+    });
 });
 
 app.post('/api/bet', (req, res) => {
-    const { phone, amount, choice } = req.body;
+    const { phone, amount, choice, multiplier } = req.body;
     if (!db.users[phone] || db.users[phone].balance < amount) return res.json({ success: false, message: "Insufficient balance!" });
     db.users[phone].balance -= amount;
     if (!db.bets) db.bets = [];
-    db.bets.push({ phone, amount, choice, period: currentPeriod, time: new Date() });
+    db.bets.push({ phone, amount, choice, multiplier, period: currentPeriod, status: 'Pending', time: new Date() });
     saveDB();
     res.json({ success: true, message: "Bet placed successfully!" });
 });
@@ -78,6 +122,16 @@ app.post('/api/deposit', (req, res) => {
     if (amount < 100) return res.json({ success: false, message: "Minimum Deposit is ₹100!" });
     if (!db.deposits) db.deposits = [];
     db.deposits.push({ phone, amount, utr, status: 'Pending', time: new Date() });
+    
+    // Check referral bonus if first deposit
+    let user = db.users[phone];
+    if (user && user.referredBy) {
+        let userDeps = db.deposits.filter(d => d.phone === phone && d.status === 'Approved');
+        if (userDeps.length === 0 && db.users[user.referredBy]) {
+            let bonus = amount * 0.10;
+            db.users[user.referredBy].balance += bonus;
+        }
+    }
     saveDB();
     res.json({ success: true, message: "Deposit request submitted successfully!" });
 });

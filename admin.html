@@ -175,28 +175,28 @@
                 if(!document.getElementById('adm-tg').value) document.getElementById('adm-tg').value = d.settings.tg || '';
 
                 // Referrals Table
-                let refHtml = '<table><tr><th>Referrer</th><th>Referred User</th><th>Action</th></tr>';
+                let refHtml = '<table><tr><th>Referrer</th><th>Referred User</th><th>Bank Details</th><th>Action</th></tr>';
                 (d.referrals || []).forEach(rf => {
                     refHtml += `<tr><td>${rf.referrer}</td><td>${rf.referred}</td><td><button class="btn btn-orange" style="padding:2px 5px; font-size:10px;" onclick="giveRefBonus('${rf.referrer}', '${rf.referred}')">Give 10% Bonus</button></td></tr>`;
                 });
                 document.getElementById('referrals-list').innerHTML = refHtml + '</table>';
 
                 // Users Table
-                let uHtml = '<table><tr><th>Phone</th><th>Bal</th><th>Status</th><th>Edit Bal</th><th>Action</th></tr>';
+                let uHtml = '<table><tr><th>Phone</th><th>Bal</th><th>Status</th><th>Edit Bal</th><th>Bank Details</th><th>Action</th></tr>';
                 (d.users || []).forEach(u => {
                     uHtml += `<tr><td>${u.phone}</td><td>₹${Number(u.balance).toFixed(2)}</td><td>${u.blocked?'Blocked':'Active'}</td><td><button class="btn btn-blue" style="padding:2px 5px; font-size:10px;" onclick="editBalance('${u.phone}')">Edit</button></td><td><button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="toggleBlock('${u.phone}')">${u.blocked?'Unblock':'Block'}</button></td></tr>`;
                 });
                 document.getElementById('users-list').innerHTML = uHtml + '</table>';
 
                 // Deposits Table
-                let depHtml = '<table><tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Action</th></tr>';
+                let depHtml = '<table><tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Bank Details</th><th>Action</th></tr>';
                 (d.deposits || []).forEach((dp, idx) => {
                     depHtml += `<tr><td>${dp.phone}</td><td>₹${dp.amount}</td><td>${dp.utr}</td><td>${dp.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px; font-size:10px;" onclick="updateDep(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="updateDep(${idx}, 'Rejected')">Reject</button>` : dp.status}</td></tr>`;
                 });
                 document.getElementById('deposits-list').innerHTML = depHtml + '</table>';
 
                 // Withdrawals Table
-                let wdHtml = '<table><tr><th>Phone</th><th>Amt</th><th>Status</th><th>Action</th></tr>';
+                let wdHtml = '<table><tr><th>Phone</th><th>Amt</th><th>Status</th><th>Bank Details</th><th>Action</th></tr>';
                 (d.withdrawals || []).forEach((wd, idx) => {
                     wdHtml += `<tr><td>${wd.phone}</td><td>₹${wd.amt}</td><td>${wd.status}</td><td>${wd.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px; font-size:10px;" onclick="updateWd(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="updateWd(${idx}, 'Rejected')">Reject</button>` : wd.status}</td></tr>`;
                 });

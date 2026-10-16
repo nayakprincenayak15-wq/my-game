@@ -49,11 +49,11 @@
                 <div>Timer:<div class="stat-val" style="color:#f59e0b;" id="st-timer">00:30</div></div>
             </div>
 
-            <!-- SEARCH USER HISTORY -->
+            <!-- SEARCH USER A-Z HISTORY -->
             <div class="card">
                 <h4 style="color:#3b82f6; margin-top:0;">🔍 User History Search Box</h4>
                 <input type="text" id="search-phone" placeholder="Enter Phone Number">
-                <button class="btn btn-blue" onclick="searchUser()">Search User History</button>
+                <button class="btn btn-blue" onclick="searchUser()">Search Full A-Z History</button>
                 <div id="search-results" style="margin-top:10px; font-size:12px; color:#cbd5e1;"></div>
             </div>
 
@@ -99,12 +99,16 @@
                 <button class="btn btn-green" onclick="saveNotice()">Broadcast</button>
             </div>
 
-            <!-- SETTINGS -->
+            <!-- SETTINGS & TELEGRAM / QR FILE UPLOAD -->
             <div class="card">
                 <h4 style="color:#3b82f6; margin-top:0;">⚙️ Settings & Telegram Link</h4>
+                <label style="font-size:11px; color:#94a3b8;">Telegram Link:</label>
                 <input type="text" id="adm-tg" placeholder="https://t.me/support">
-                <input type="text" id="adm-qr" placeholder="QR Code Link">
-                <button class="btn btn-green" onclick="saveSettings()">Save</button>
+                
+                <label style="font-size:11px; color:#94a3b8; margin-top:5px; display:block;">Upload QR Code Image (Gallery):</label>
+                <input type="file" id="adm-qr-file" accept="image/*" style="background:transparent; border:none; padding:5px 0;">
+                
+                <button class="btn btn-green" style="margin-top:5px;" onclick="saveSettings()">Save & Upload</button>
             </div>
 
             <!-- LIVE BETS -->
@@ -169,7 +173,6 @@
 
                 if(!document.getElementById('adm-notice').value) document.getElementById('adm-notice').value = d.settings.notice || '';
                 if(!document.getElementById('adm-tg').value) document.getElementById('adm-tg').value = d.settings.tg || '';
-                if(!document.getElementById('adm-qr').value) document.getElementById('adm-qr').value = d.settings.qr || '';
 
                 // Referrals Table
                 let refHtml = '<table><tr><th>Referrer</th><th>Referred User</th><th>Action</th></tr>';
@@ -178,7 +181,7 @@
                 });
                 document.getElementById('referrals-list').innerHTML = refHtml + '</table>';
 
-                // Users Table with Edit Balance
+                // Users Table
                 let uHtml = '<table><tr><th>Phone</th><th>Bal</th><th>Status</th><th>Edit Bal</th><th>Action</th></tr>';
                 (d.users || []).forEach(u => {
                     uHtml += `<tr><td>${u.phone}</td><td>₹${Number(u.balance).toFixed(2)}</td><td>${u.blocked?'Blocked':'Active'}</td><td><button class="btn btn-blue" style="padding:2px 5px; font-size:10px;" onclick="editBalance('${u.phone}')">Edit</button></td><td><button class="btn btn-red" style="padding:2px 5px; font-size:10px;" onclick="toggleBlock('${u.phone}')">${u.blocked?'Unblock':'Block'}</button></td></tr>`;
@@ -244,15 +247,23 @@
                 let u = d.user;
                 let html = `<div style="background:#0b1329; padding:10px; border-radius:8px;">
                     <div><b>Phone:</b> ${u.phone} | <b>Balance:</b> ₹${Number(u.balance).toFixed(2)}</div>
-                    <div><b>Referred By:</b> ${u.referredBy || 'None'} | <b>Total Deposit:</b> ₹${u.totalDeposit || 0}</div>
+                    <div><b>Referred By:</b> ${u.referredBy || 'None'}</div>
                     <hr style="border-color:#1e2d54;">
-                    <div><b>Balance Edit Logs (${(u.balanceLogs || []).length}):</b></div>`;
-                (u.balanceLogs || []).forEach(log => {
-                    html += `<div style="font-size:11px; color:#f59e0b;">- [${log.type.toUpperCase()}] ₹${log.amount} (${log.time})</div>`;
+                    <div><b>💰 Total Deposits (${d.deposits.length}):</b></div>`;
+                d.deposits.forEach(dp => {
+                    html += `<div style="font-size:11px;">- ₹${dp.amount} (UTR: ${dp.utr}) -> <b style="color:${dp.status==='Approved'?'#22c55e':'#facc15'}">${dp.status}</b></div>`;
                 });
-                html += `<hr style="border-color:#1e2d54;"><div><b>Recent Bets (${d.bets.length}):</b></div>`;
-                d.bets.slice(0, 5).forEach(b => {
-                    html += `<div>- Period ${b.period}: <b>${b.choice}</b> (₹${b.amount}) -> <span style="color:${b.status==='Win'?'#22c55e':'#ef4444'}">${b.status}</span></div>`;
+                html += `<hr style="border-color:#1e2d54;"><div><b>💸 Total Withdrawals (${d.withdrawals.length}):</b></div>`;
+                d.withdrawals.forEach(wd => {
+                    html += `<div style="font-size:11px;">- ₹${wd.amt} (${wd.bank || 'Bank'}) -> <b style="color:${wd.status==='Approved'?'#22c55e':'#ef4444'}">${wd.status}</b></div>`;
+                });
+                html += `<hr style="border-color:#1e2d54;"><div><b>⚖️ Balance Edit Logs (${(u.balanceLogs || []).length}):</b></div>`;
+                (u.balanceLogs || []).forEach(log => {
+                    html += `<div style="font-size:11px; color:#f59e0b;">- [${log.type}] ₹${log.amount} (${log.time})</div>`;
+                });
+                html += `<hr style="border-color:#1e2d54;"><div><b>🎮 All Bets History (${d.bets.length}):</b></div>`;
+                d.bets.forEach(b => {
+                    html += `<div style="font-size:11px;">- Period ${b.period}: Selected <b>${b.choice}</b> (₹${b.amount}) -> <b style="color:${b.status==='Win'?'#22c55e':'#ef4444'}">${b.status} ${b.winAmt ? '₹'+b.winAmt : ''}</b></div>`;
                 });
                 html += `</div>`;
                 document.getElementById('search-results').innerHTML = html;
@@ -290,12 +301,26 @@
 
         function saveSettings() {
             let tg = document.getElementById('adm-tg').value;
-            let qr = document.getElementById('adm-qr').value;
-            fetch('/api/admin/settings', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ key: admKey, tg: tg, qr: qr })
-            }).then(r=>r.json()).then(d=> alert("Settings saved!"));
+            let fileInput = document.getElementById('adm-qr-file');
+            
+            if(fileInput.files.length > 0) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let qrData = e.target.result;
+                    fetch('/api/admin/settings', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ key: admKey, tg: tg, qr: qrData })
+                    }).then(r=>r.json()).then(d=> alert("Telegram Link & QR Image Uploaded & Saved Live!"));
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                fetch('/api/admin/settings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ key: admKey, tg: tg })
+                }).then(r=>r.json()).then(d=> alert("Telegram Link Saved Live!"));
+            }
         }
 
         function updateDep(idx, status) {

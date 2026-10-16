@@ -2,11 +2,11 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 
-const app = express();
+const app = express({ limit: '10mb' });
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(__dirname));
 
 const DB_PATH = path.join(__dirname, 'db.json');
@@ -94,7 +94,16 @@ app.get('/api/game-state', (req, res) => {
     let phone = req.query.phone;
     let userBal = db.users[phone] ? db.users[phone].balance : undefined;
     let myBets = (db.bets || []).filter(b => b.phone === phone).reverse();
-    res.json({ period: currentPeriod, timer: timerSeconds, history: db.history || [], notice: db.settings.notice, userBalance: userBal, myBets: myBets });
+    res.json({ 
+        period: currentPeriod, 
+        timer: timerSeconds, 
+        history: db.history || [], 
+        notice: db.settings.notice, 
+        tg: db.settings.tg || 'https://t.me/support', 
+        qr: db.settings.qr || '', 
+        userBalance: userBal, 
+        myBets: myBets 
+    });
 });
 
 app.post('/api/bet', (req, res) => {
@@ -185,7 +194,9 @@ app.get('/api/admin/user-details', (req, res) => {
     let u = db.users[phone];
     if (!u) return res.json({ success: false, message: "User not found!" });
     let uBets = (db.bets || []).filter(b => b.phone === phone).reverse();
-    res.json({ success: true, user: u, bets: uBets });
+    let uDeps = (db.deposits || []).filter(d => d.phone === phone).reverse();
+    let uWds = (db.withdrawals || []).filter(w => w.phone === phone).reverse();
+    res.json({ success: true, user: u, bets: uBets, deposits: uDeps, withdrawals: uWds });
 });
 
 app.post('/api/admin/edit-balance', (req, res) => {
@@ -243,7 +254,7 @@ app.post('/api/admin/update-withdraw', (req, res) => {
     if (wd && wd.status === 'Pending') {
         wd.status = status;
         if (status === 'Rejected' && db.users[wd.phone]) {
-            db.users[wd.phone].balance += Number(wd.amt); // Refund on rejection
+            db.users[wd.phone].balance += Number(wd.amt);
             if (!db.users[wd.phone].balanceLogs) db.users[wd.phone].balanceLogs = [];
             db.users[wd.phone].balanceLogs.unshift({ type: 'Withdrawal Rejected (Refunded)', amount: wd.amt, time: new Date().toLocaleString() });
         } else if (status === 'Approved' && db.users[wd.phone]) {

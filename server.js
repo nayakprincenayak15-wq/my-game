@@ -18,7 +18,7 @@ function saveDB() {
     try { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2)); } catch(e){}
 }
 
-let currentPeriod = "20261016000522";
+let currentPeriod = "20261015024720";
 let timerSeconds = 30;
 
 setInterval(() => {
@@ -78,7 +78,6 @@ app.post('/api/register', (req, res) => {
     if (db.users[phone]) return res.json({ success: false, message: "Phone number already registered!" });
     
     let customId = "MW" + Math.floor(100000 + Math.random() * 900000);
-    // Balance set to 0 (No free registration bonus)
     db.users[phone] = { phone, password, balance: 0, customId, referredBy: referredBy || '', totalDeposit: 0, totalWagered: 0 };
     saveDB();
     res.json({ success: true, user: db.users[phone] });
@@ -113,7 +112,6 @@ app.post('/api/bet', (req, res) => {
     if (!db.users[phone] || db.users[phone].balance < amount) return res.json({ success: false, message: "Insufficient balance!" });
     db.users[phone].balance -= amount;
     
-    // Track total wagered amount for withdrawal turnover rule
     if (db.users[phone].totalWagered === undefined) db.users[phone].totalWagered = 0;
     db.users[phone].totalWagered += Number(amount);
 
@@ -158,14 +156,13 @@ app.post('/api/withdraw', (req, res) => {
     let totalDep = u.totalDeposit || 0;
     let totalWag = u.totalWagered || 0;
 
-    // Check wagering requirement: must play equal to total deposited amount
     if (totalWag < totalDep) {
         let remaining = totalDep - totalWag;
-        return res.json({ success: false, message: `Please complete game play of remaining ₹${remaining} (Total Deposit: ₹${totalDep}, Played: ₹${totalWag}) before withdrawal!` });
+        return res.json({ success: false, message: `Please complete game play of remaining ₹${remaining} before withdrawal!` });
     }
 
     if (!db.withdrawals) db.withdrawals = [];
-    db.withdrawals.push({ phone, amt: wdAmt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
+    db.withdrawals.push({ phone, amt: wdAddr = wdAmt, bank, holder, acc, ifsc, status: 'Pending', time: new Date() });
     saveDB();
     res.json({ success: true, message: "Withdrawal request submitted successfully!" });
 });

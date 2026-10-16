@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>maan.win</title>
     <style>
-        body { background-color: #0b1329; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 12px; }
-        .container { max-width: 420px; margin: auto; }
+        body { background-color: #0b1329; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px 10px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 480px; background: #0b1329; box-shadow: 0 0 25px rgba(0,0,0,0.8); border-radius: 12px; padding: 5px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .logo { font-size: 24px; font-weight: bold; color: #f59e0b; }
+        .logo { font-size: 26px; font-weight: bold; color: #f59e0b; }
         .btn-top-tg { background: #0088cc; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .btn-top-lo { background: #ef4444; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
         .card { background-color: #131d38; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #1e2d54; }
@@ -22,7 +22,7 @@
         .btn-wd { background-color: #ef4444; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
         .timer-box { font-size: 42px; font-weight: bold; color: #22c55e; text-align: center; margin: 5px 0; }
         .grid-num { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 12px 0; }
-        .num-btn { height: 42px; border-radius: 21px; border: none; font-weight: bold; color: #ffffff; cursor: pointer; font-size: 16px; display: flex; justify-content: center; align-items: center; }
+        .num-btn { height: 44px; border-radius: 22px; border: none; font-weight: bold; color: #ffffff; cursor: pointer; font-size: 16px; display: flex; justify-content: center; align-items: center; }
         .btn-green-bg { background-color: #22c55e; }
         .btn-violet-bg { background-color: #a855f7; }
         .btn-red-bg { background-color: #ef4444; }
@@ -30,7 +30,7 @@
         .btn-small { background-color: #3b82f6; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }
         .hidden { display: none !important; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: flex-end; z-index: 1000; }
-        .modal-content { background: #131d38; padding: 15px; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 420px; border: 1px solid #1e2d54; box-sizing: border-box; }
+        .modal-content { background: #131d38; padding: 15px; border-top-left-radius: 16px; border-top-right-radius: 16px; width: 100%; max-width: 480px; border: 1px solid #1e2d54; box-sizing: border-box; }
         .chip { padding: 6px 12px; border-radius: 6px; background: #1e293b; color: #fff; border: 1px solid #3b82f6; cursor: pointer; font-weight: bold; text-align: center; }
         .chip.active { background: #22c55e; border-color: #22c55e; }
         .status-pending { color: #facc15; font-weight: bold; }
@@ -68,7 +68,7 @@
             <div class="card">
                 <div class="card-inner">
                     <div>
-                        <div class="bal-title" id="user-id-display">Balance (ID: MW984389)</div>
+                        <div class="bal-title" id="user-id-display">Balance (ID: MW838735)</div>
                         <div class="bal-amount" id="user-bal">₹0.00</div>
                     </div>
                     <div style="display:flex; gap:10px; align-items:center;">
@@ -92,7 +92,7 @@
 
             <div class="card">
                 <div style="font-size:13px; color:#94a3b8; text-align:center;">Period: <span id="period-val" style="color:#f59e0b; font-weight:bold;">--</span></div>
-                <div class="timer-box" id="timer-val">00:30</div>
+                <div class="timer-box" id="timer-val">00:07</div>
                 
                 <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
                     <button class="num-btn btn-green-bg" style="border-radius:8px;" onclick="openBetModal('Green', 1)">Green</button>

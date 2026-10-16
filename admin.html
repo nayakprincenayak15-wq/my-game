@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>maan.win Master Admin</title>
+    <style>
+        body { background-color: #0b1329; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 12px; }
+        .container { max-width: 450px; margin: auto; }
+        .card { background-color: #131d38; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #1e2d54; }
+        .title { color: #f59e0b; font-weight: bold; font-size: 20px; text-align: center; margin-bottom: 15px; }
+        .grid-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; gap: 8px; font-weight: bold; }
+        .stat-val { font-size: 18px; margin-top: 4px; }
+        input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #2a3c68; background: #0b1329; color: #fff; box-sizing: border-box; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: #fff; }
+        .btn-blue { background: #2563eb; }
+        .btn-green { background: #16a34a; }
+        .btn-red { background: #dc2626; }
+        .btn-orange { background: #f59e0b; color: #000; }
+        .grid-res { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px; }
+        .res-btn { padding: 10px 0; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; background: #2563eb; color: #fff; }
+        .res-btn.selected { background: #22c55e; border: 2px solid #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; margin-top: 8px; }
+        th { color: #f59e0b; border-bottom: 1px solid #2a3c68; padding: 6px; }
+        td { border-bottom: 1px solid #1e2d54; padding: 6px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ADMIN LOGIN PAGE -->
+        <div id="login-box" class="card" style="margin-top:50px;">
+            <div style="text-align:center; font-size:24px; font-weight:bold; color:#3b82f6; margin-bottom:20px;">Admin Login</div>
+            <label style="font-size:12px; color:#94a3b8;">Username</label>
+            <input type="text" id="adm-user" placeholder="Username">
+            <label style="font-size:12px; color:#94a3b8;">Password</label>
+            <input type="password" id="adm-pass" placeholder="Password">
+            <button class="btn btn-green" onclick="loginAdmin()">Login</button>
+        </div>
+
+        <!-- MAIN MASTER ADMIN DASHBOARD -->
+        <div id="admin-dash" class="hidden">
+            <div class="title">maan.win Master Admin</div>
+
+            <div class="card grid-stats">
+                <div>Online:<div class="stat-val" style="color:#22c55e;" id="st-online">1</div></div>
+                <div>Total Reg:<div class="stat-val" style="color:#3b82f6;" id="st-reg">0</div></div>
+                <div>Timer:<div class="stat-val" style="color:#f59e0b;" id="st-timer">00:30</div></div>
+            </div>
+
+            <!-- RESULT CONTROL -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">🎯 Result Control</h4>
+                <div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Set forced result for current period: <span id="cur-period" style="color:#f59e0b; font-weight:bold;"></span></div>
+                <div class="grid-res">
+                    <button class="res-btn" onclick="setForceNum(0, this)">0</button>
+                    <button class="res-btn" onclick="setForceNum(1, this)">1</button>
+                    <button class="res-btn" onclick="setForceNum(2, this)">2</button>
+                    <button class="res-btn" onclick="setForceNum(3, this)">3</button>
+                    <button class="res-btn" onclick="setForceNum(4, this)">4</button>
+                    <button class="res-btn" onclick="setForceNum(5, this)">5</button>
+                    <button class="res-btn" onclick="setForceNum(6, this)">6</button>
+                    <button class="res-btn" onclick="setForceNum(7, this)">7</button>
+                    <button class="res-btn" onclick="setForceNum(8, this)">8</button>
+                    <button class="res-btn" onclick="setForceNum(9, this)">9</button>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button class="btn btn-orange" onclick="setForceBS('Big', this)">Big</button>
+                    <button class="btn btn-blue" onclick="setForceBS('Small', this)">Small</button>
+                </div>
+            </div>
+
+            <!-- NOTICE MANAGER -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">📢 Notice Manager</h4>
+                <input type="text" id="adm-notice" placeholder="Welcome to maan.win!">
+                <button class="btn btn-green" onclick="saveNotice()">Broadcast</button>
+            </div>
+
+            <!-- SETTINGS -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">⚙️ Settings & Telegram Link</h4>
+                <input type="text" id="adm-tg" placeholder="https://t.me/support">
+                <input type="text" id="adm-qr" placeholder="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi">
+                <button class="btn btn-green" onclick="saveSettings()">Save</button>
+            </div>
+
+            <!-- REFERRALS -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">👥 Referrals</h4>
+                <div id="ref-list">Loading...</div>
+            </div>
+
+            <!-- USERS CONTROL -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">👤 Users Management</h4>
+                <div id="users-list">Loading...</div>
+            </div>
+
+            <!-- DEPOSITS -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">💰 Deposits</h4>
+                <div id="deposits-list">Loading...</div>
+            </div>
+
+            <!-- WITHDRAWALS -->
+            <div class="card">
+                <h4 style="color:#3b82f6; margin-top:0;">💸 Withdrawals</h4>
+                <div id="withdraws-list">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let admKey = '';
+        function loginAdmin() {
+            let u = document.getElementById('adm-user').value;
+            let p = document.getElementById('adm-pass').value;
+            fetch('/api/admin/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username: u, password: p })
+            }).then(r=>r.json()).then(d=> {
+                if(d.success) {
+                    admKey = d.key;
+                    document.getElementById('login-box').classList.add('hidden');
+                    document.getElementById('admin-dash').classList.remove('hidden');
+                    setInterval(loadAdminData, 2000);
+                    loadAdminData();
+                } else { alert(d.message); }
+            });
+        }
+
+        function loadAdminData() {
+            fetch('/api/admin/data?key=' + admKey).then(r=>r.json()).then(d=> {
+                if(!d.success) return;
+                document.getElementById('st-online').innerText = d.onlineUsers || 1;
+                document.getElementById('st-reg').innerText = d.totalReg || 0;
+                let m = Math.floor(d.timer/60).toString().padStart(2,'0');
+                let s = (d.timer%60).toString().padStart(2,'0');
+                document.getElementById('st-timer').innerText = m + ':' + s;
+                document.getElementById('cur-period').innerText = d.period;
+
+                // Notice & Settings
+                if(!document.getElementById('adm-notice').value) document.getElementById('adm-notice').value = d.settings.notice || '';
+                if(!document.getElementById('adm-tg').value) document.getElementById('adm-tg').value = d.settings.tg || '';
+                if(!document.getElementById('adm-qr').value) document.getElementById('adm-qr').value = d.settings.qr || '';
+
+                // Render Users
+                let uHtml = '<table><tr><th>Phone</th><th>Balance</th><th>Status</th><th>Block</th><th>Pass</th></tr>';
+                (d.users || []).forEach(u => {
+                    uHtml += `<tr><td>${u.phone}</td><td>₹${u.balance}</td><td>${u.blocked?'Blocked':'Active'}</td><td><button class="btn btn-red" style="padding:2px 5px;" onclick="toggleBlock('${u.phone}')">${u.blocked?'Unblock':'Block'}</button></td><td><button class="btn btn-blue" style="padding:2px 5px;" onclick="changePass('${u.phone}')">Change</button></td></tr>`;
+                });
+                document.getElementById('users-list').innerHTML = uHtml + '</table>';
+
+                // Render Deposits
+                let depHtml = '<table><tr><th>Phone</th><th>Amt</th><th>UTR</th><th>Action</th></tr>';
+                (d.deposits || []).forEach((dp, idx) => {
+                    depHtml += `<tr><td>${dp.phone}</td><td>₹${dp.amount}</td><td>${dp.utr}</td><td>${dp.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px;" onclick="updateDep(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px;" onclick="updateDep(${idx}, 'Rejected')">Reject</button>` : dp.status}</td></tr>`;
+                });
+                document.getElementById('deposits-list').innerHTML = depHtml + '</table>';
+
+                // Render Withdrawals
+                let wdHtml = '<table><tr><th>Phone</th><th>Amt</th><th>Status</th><th>Action</th></tr>';
+                (d.withdrawals || []).forEach((wd, idx) => {
+                    wdHtml += `<tr><td>${wd.phone}</td><td>₹${wd.amt}</td><td>${wd.status}</td><td>${wd.status === 'Pending' ? `<button class="btn btn-green" style="padding:2px 5px;" onclick="updateWd(${idx}, 'Approved')">Approve</button> <button class="btn btn-red" style="padding:2px 5px;" onclick="updateWd(${idx}, 'Rejected')">Reject</button>` : wd.status}</td></tr>`;
+                });
+                document.getElementById('withdraws-list').innerHTML = wdHtml + '</table>';
+
+                // Render Referrals
+                let refHtml = '<table><tr><th>Referrer</th><th>Referred User</th><th>Action</th></tr>';
+                (d.referrals || []).forEach(rf => {
+                    refHtml += `<tr><td>${rf.referrer}</td><td>${rf.referred}</td><td><button class="btn btn-orange" style="padding:2px 5px;" onclick="giveRefBonus('${rf.referrer}', '${rf.referred}')">Bonus 10%</button></td></tr>`;
+                });
+                document.getElementById('ref-list').innerHTML = refHtml + '</table>';
+            });
+        }
+
+        function setForceNum(num, btn) {
+            document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            fetch('/api/admin/force-result', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, num: num })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function setForceBS(bs, btn) {
+            fetch('/api/admin/force-result', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, bs: bs })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function saveNotice() {
+            let n = document.getElementById('adm-notice').value;
+            fetch('/api/admin/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, notice: n })
+            }).then(r=>r.json()).then(d=> alert("Notice updated!"));
+        }
+
+        function saveSettings() {
+            let tg = document.getElementById('adm-tg').value;
+            let qr = document.getElementById('adm-qr').value;
+            fetch('/api/admin/settings', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, tg: tg, qr: qr })
+            }).then(r=>r.json()).then(d=> alert("Settings saved!"));
+        }
+
+        function updateDep(idx, status) {
+            fetch('/api/admin/update-deposit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, index: idx, status: status })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function updateWd(idx, status) {
+            fetch('/api/admin/update-withdraw', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, index: idx, status: status })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function toggleBlock(phone) {
+            fetch('/api/admin/toggle-block', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, phone: phone })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function changePass(phone) {
+            let p = prompt("Enter new password for " + phone);
+            if(!p) return;
+            fetch('/api/admin/change-pass', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, phone: phone, newPass: p })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+
+        function giveRefBonus(refPhone, userPhone) {
+            let amt = prompt("Enter bonus amount for " + refPhone, "10");
+            if(!amt) return;
+            fetch('/api/admin/give-bonus', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ key: admKey, phone: refPhone, bonus: Number(amt) })
+            }).then(r=>r.json()).then(d=> alert(d.message));
+        }
+    </script>
+</body>
+</html>

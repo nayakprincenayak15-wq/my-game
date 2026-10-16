@@ -275,3 +275,27 @@ app.post('/api/admin/toggle-block', (req, res) => {
 });
 
 app.listen(PORT, () => { console.log('Server running on port ' + PORT); });
+
+
+app.get('/api/admin/bank-info', (req, res) => {
+    const { key, phone } = req.query;
+    if (key !== ADMIN_KEY && key !== admKey) {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+    const db = loadDB();
+    const user = db.users.find(u => u.phone === phone);
+    if (!user) {
+        return res.json({ success: false, message: "User not found" });
+    }
+    const bank = user.bank || (user.bankDetails ? user.bankDetails : null);
+    res.json({
+        success: true,
+        phone: user.phone,
+        bank: bank || {
+            holder: user.holder || 'N/A',
+            bankName: user.bankName || 'N/A',
+            accountNumber: user.accountNumber || 'N/A',
+            ifsc: user.ifsc || 'N/A'
+        }
+    });
+});

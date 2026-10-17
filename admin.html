@@ -150,7 +150,6 @@
                     admKey = d.key;
                     document.getElementById('login-box').classList.add('hidden');
                     document.getElementById('admin-dash').classList.remove('hidden');
-                    setInterval(loadAdminData, 2000);
                     loadAdminData();
                 } else { alert(d.message); }
             });
@@ -350,10 +349,7 @@
 
     <script>
     // Fix table columns dynamically for bank details
-    setInterval(() => {
-        document.querySelectorAll('#withdrawalsTable tr, table tr').forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 4 && !row.dataset.fixedBank) {
+    if (cells.length >= 4 && !row.dataset.fixedBank) {
                 // Check if the row text contains a withdrawal amount or status
                 if (row.innerText.includes('Pending') || row.innerText.includes('Approved')) {
                     row.dataset.fixedBank = "true";

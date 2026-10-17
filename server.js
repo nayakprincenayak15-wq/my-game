@@ -298,11 +298,7 @@ app.listen(PORT, () => { console.log('Server running on port ' + PORT); });
 });
 
 
-app.get('/api/admin/bank-info', (req, res) => {
-    try {
-        const phone = req.query.phone;
-        if (!phone) {
-            return res.json({ success: false, message: "Phone required" });
+
         }
         
         // Read database safely
@@ -332,5 +328,35 @@ app.get('/api/admin/bank-info', (req, res) => {
         });
     } catch (err) {
         return res.json({ success: false, error: err.message });
+    }
+});
+
+
+app.get('/api/admin/bank-info', (req, res) => {
+    try {
+        const phoneKey = req.query.phone;
+        if (!phoneKey) {
+            return res.json({ success: false, message: "Phone required" });
+        }
+        let db = { users: [] };
+        if (fs.existsSync('db.json')) {
+            db = JSON.parse(fs.readFileSync('db.json', 'utf8'));
+        }
+        const foundUser = (db.users || []).find(u => String(u.phone) === String(phoneKey));
+        if (!foundUser) {
+            return res.json({ success: false, message: "User not found" });
+        }
+        res.json({
+            success: true,
+            phone: foundUser.phone,
+            bank: foundUser.bank || foundUser.bankDetails || {
+                holder: foundUser.holder || foundUser.name || 'N/A',
+                bankName: foundUser.bankName || 'N/A',
+                accountNumber: foundUser.accountNumber || 'N/A',
+                ifsc: foundUser.ifsc || 'N/A'
+            }
+        });
+    } catch (err) {
+        res.json({ success: false, error: err.message });
     }
 });

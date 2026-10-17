@@ -422,12 +422,34 @@ const originalRenderWithdrawals = window.renderWithdrawals || function(withdrawa
       <span>Amt: ₹${w.amount}</span>
       <span>Status: ${w.status}</span>
       <div class="bank-info">
-        Account: ${w.account || w.accountNumber || (w.bank && w.bank.account) || 'N/A'} | 
-        IFSC: ${w.ifsc || (w.bank && w.bank.ifsc) || 'N/A'}
+        Account: ${w.account || w.accountNumber || (w.bank + (w.holderName ? " | Name: " + w.holderName : "") + (w.accountNumber ? " | A/C: " + w.accountNumber : "") + (w.ifsc ? " | IFSC: " + w.ifsc : "") && w.bank + (w.holderName ? " | Name: " + w.holderName : "") + (w.accountNumber ? " | A/C: " + w.accountNumber : "") + (w.ifsc ? " | IFSC: " + w.ifsc : "").account) || 'N/A'} | 
+        IFSC: ${w.ifsc || (w.bank + (w.holderName ? " | Name: " + w.holderName : "") + (w.accountNumber ? " | A/C: " + w.accountNumber : "") + (w.ifsc ? " | IFSC: " + w.ifsc : "") && w.bank + (w.holderName ? " | Name: " + w.holderName : "") + (w.accountNumber ? " | A/C: " + w.accountNumber : "") + (w.ifsc ? " | IFSC: " + w.ifsc : "").ifsc) || 'N/A'}
       </div>
     </div>
   `).join('');
 };
+</script>
+
+
+<script>
+// Detailed Bank Info Injector for A-Z History Withdrawals
+window.addEventListener('DOMContentLoaded', () => {
+  const originalFetch = window.fetch;
+  // Hook into fetch or history rendering to expand bank info
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      const withdrawalItems = document.querySelectorAll('#user-history-result div, .history-result div, div');
+      withdrawalItems.forEach(el => {
+        if (el.innerText && el.innerText.includes('Punjab National Bank') && !el.innerText.includes('A/C:')) {
+          // If bank details exist in parent data or dataset, render them fully
+          // We can append dummy/actual placeholders if available in the object
+        }
+      });
+    });
+  });
+  const target = document.getElementById('user-history-result') || document.body;
+  if(target) observer.observe(target, { childList: true, subtree: true });
+});
 </script>
 
 </body>

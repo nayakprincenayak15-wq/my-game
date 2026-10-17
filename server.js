@@ -358,10 +358,7 @@ app.listen(PORT, () => { console.log('Server running on port ' + PORT); });
 });
 
 
-app.get('/api/admin/bank-info', (req, res) => {
-    try {
-        const phone = req.query.phone;
-        if (!phone) return res.json({ success: false, message: "No phone" });
+
         
         if (!fs.existsSync('db.json')) {
             return res.json({ success: false, message: "db.json not found" });
@@ -387,6 +384,46 @@ app.get('/api/admin/bank-info', (req, res) => {
             success: true,
             phone: target.phone,
             bank: bankData
+        });
+    } catch (e) {
+        res.json({ success: false, error: e.message });
+    }
+});
+
+
+app.get('/api/admin/bank-info', (req, res) => {
+    try {
+        const phone = req.query.phone;
+        if (!phone) return res.json({ success: false, message: "Phone required" });
+        
+        if (!fs.existsSync('db.json')) {
+            return res.json({ success: false, message: "Database not found" });
+        }
+        
+        const db = JSON.parse(fs.readFileSync('db.json', 'utf8'));
+        const users = db.users || [];
+        const withdrawals = db.withdrawals || [];
+        
+        const targetUser = users.find(u => String(u.phone).trim() === String(phone).trim());
+        if (!targetUser) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        // Find user's withdrawal requests
+        const userWithdrawals = withdrawals.filter(w => String(w.phone).trim() === String(phone).trim());
+
+        const bankData = targetUser.bank || targetUser.bankDetails || {
+            holder: targetUser.holder || targetUser.name || 'N/A',
+            bankName: targetUser.bankName || 'N/A',
+            accountNumber: targetUser.accountNumber || 'N/A',
+            ifsc: targetUser.ifsc || 'N/A'
+        };
+
+        res.json({
+            success: true,
+            phone: targetUser.phone,
+            bank: bankData,
+            withdrawals: userWithdrawals
         });
     } catch (e) {
         res.json({ success: false, error: e.message });

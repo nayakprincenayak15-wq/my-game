@@ -389,82 +389,93 @@
     
 
     <script>
-    function searchWithdrawalBank() {
-        const phone = document.getElementById('withdrawalSearchPhone').value.trim();
-        const resBox = document.getElementById('withdrawalBankResult');
-        if (!phone) {
-            alert("Kripya phone number darj karein!");
-            return;
-        }
-        resBox.style.display = 'block';
-        resBox.innerHTML = '<span style="color:#f59e0b;">Searching bank details...</span>';
-
-        fetch('/api/admin/bank-info?phone=' + encodeURIComponent(phone))
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.success && data.bank) {
-                    resBox.innerHTML = `
-                        <div style="color:#10b981; font-weight:bold; margin-bottom:6px;">✅ Withdrawal Bank Account Found:</div>
-                        <b>Holder Name:</b> ${data.bank.holder || 'N/A'}<br>
-                        <b>Bank Name:</b> ${data.bank.bankName || 'N/A'}<br>
-                        <b>Account No:</b> ${data.bank.accountNumber || 'N/A'}<br>
-                        <b>IFSC Code:</b> ${data.bank.ifsc || 'N/A'}
-                    `;
-                } else {
-                    resBox.innerHTML = '<span style="color:#ef4444;">❌ Is number par koi bank details nahi mili.</span>';
-                }
-            })
-            .catch(err => {
-                resBox.innerHTML = '<span style="color:#ef4444;">❌ Connection error. Try again.</span>';
-            });
+    
+        
     }
     </script>
     
 
     <script>
-    function searchWithdrawalBank() {
-        const phone = document.getElementById('withdrawalSearchPhone').value.trim();
-        const resBox = document.getElementById('withdrawalBankResult');
-        if (!phone) {
-            alert("Kripya phone number darj karein!");
-            return;
-        }
-        resBox.style.display = 'block';
-        resBox.innerHTML = '<span style="color:#f59e0b;">Searching records...</span>';
-
-        fetch('/api/admin/bank-info?phone=' + encodeURIComponent(phone))
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.success) {
-                    let wHtml = '';
-                    if (data.withdrawals && data.withdrawals.length > 0) {
-                        data.withdrawals.forEach(w => {
-                            wHtml += `<div style="margin-top:8px; padding:6px; background:#111c38; border-radius:4px;">
-                                <b>Amount:</b> ₹${w.amount || 0} | <b>Status:</b> <span style="color:${w.status === 'Approved' ? '#10b981' : w.status === 'Rejected' ? '#ef4444' : '#f59e0b'}">${w.status || 'Pending'}</span>
-                            </div>`;
-                        });
-                    } else {
-                        wHtml = '<div style="color:#94a3b8; margin-top:6px;">No withdrawal requests found for this number.</div>';
-                    }
-
-                    resBox.innerHTML = `
-                        <div style="color:#10b981; font-weight:bold; margin-bottom:6px;">✅ User Details Found:</div>
-                        <b>Holder Name:</b> ${data.bank.holder || 'N/A'}<br>
-                        <b>Bank Name:</b> ${data.bank.bankName || 'N/A'}<br>
-                        <b>Account No:</b> ${data.bank.accountNumber || 'N/A'}<br>
-                        <b>IFSC Code:</b> ${data.bank.ifsc || 'N/A'}<br>
-                        <div style="margin-top:8px; border-top:1px solid #1e2d54; padding-top:6px; font-weight:bold; color:#38bdf8;">Withdrawal Requests:</div>
-                        ${wHtml}
-                    `;
-                } else {
-                    resBox.innerHTML = '<span style="color:#ef4444;">❌ Is number par koi data nahi mila.</span>';
-                }
-            })
-            .catch(err => {
-                resBox.innerHTML = '<span style="color:#ef4444;">❌ Connection error. Try again.</span>';
-            });
+    
+                 
     }
     </script>
     
 </body>
+<style>
+    /* Blinking animation ko puri tarah band karne ke liye */
+    .blink, [style*="blink"], .btn-blink {
+        animation: none !important;
+        -webkit-animation: none !important;
+    }
+</style>
+
+<script>
+async function searchWithdrawalBank() {
+    const phone = document.getElementById('withdrawalSearchPhone').value.trim();
+    const resBox = document.getElementById('withdrawalBankResult');
+    if (!phone) {
+        alert('Kripya phone number darj karein!');
+        return;
+    }
+    resBox.style.display = 'block';
+    resBox.innerHTML = '<span style="color:#f59e0b;">Searching A to Z records...</span>';
+
+    try {
+        const response = await fetch('/api/admin/user-history?phone=' + encodeURIComponent(phone));
+        const data = await response.json();
+        
+        if (data && data.success) {
+            let html = `<div style="font-weight:bold; margin-bottom:8px; color:#10b981; font-size:15px;">👤 User A to Z History:</div>`;
+            html += `<b>Phone:</b> ${data.user.phone || 'N/A'}<br>`;
+            html += `<b>Balance:</b> ₹${data.user.balance || 0}<br>`;
+            html += `<b>Referred By:</b> ${data.user.referredBy || 'None'}<br>`;
+            
+            const b = data.user.bank || {};
+            html += `<div style="margin-top:10px; padding:6px; background:#111c38; border-radius:4px;"><b>🏦 Bank Details:</b><br>`;
+            html += `<b>Holder Name:</b> ${b.holder || 'N/A'}<br>`;
+            html += `<b>Bank Name:</b> ${b.bankName || 'N/A'}<br>`;
+            html += `<b>Account No:</b> ${b.accountNumber || 'N/A'}<br>`;
+            html += `<b>IFSC Code:</b> ${b.ifsc || 'N/A'}</div>`;
+
+            // Withdrawals
+            html += `<div style="margin-top:10px; border-top:1px solid #1e2d54; padding-top:6px;"><b>💸 Withdrawals (${data.withdrawals.length}):</b></div>`;
+            if (data.withdrawals.length > 0) {
+                data.withdrawals.forEach(w => {
+                    html += `<div style="font-size:12px; margin-top:4px; background:#111c38; padding:6px; border-radius:4px;">Amount: ₹${w.amount} | Status: <span style="color:${w.status==='Approved'?'#10b981':w.status==='Rejected'?'#ef4444':'#f59e0b'}">${w.status}</span></div>`;
+                });
+            } else {
+                html += `<div style="font-size:12px; color:#94a3b8;">No withdrawals found</div>`;
+            }
+
+            // Deposits
+            html += `<div style="margin-top:10px; border-top:1px solid #1e2d54; padding-top:6px;"><b>💰 Deposits (${data.deposits.length}):</b></div>`;
+            if (data.deposits.length > 0) {
+                data.deposits.forEach(d => {
+                    html += `<div style="font-size:12px; margin-top:4px; background:#111c38; padding:6px; border-radius:4px;">Amount: ₹${d.amount} | UTR: ${d.utr || 'N/A'} | Status: ${d.status || 'Success'}</div>`;
+                });
+            } else {
+                html += `<div style="font-size:12px; color:#94a3b8;">No deposits found</div>`;
+            }
+
+            // Bets
+            html += `<div style="margin-top:10px; border-top:1px solid #1e2d54; padding-top:6px;"><b>🎮 Bets History (${data.bets.length}):</b></div>`;
+            if (data.bets.length > 0) {
+                data.bets.forEach(bt => {
+                    html += `<div style="font-size:12px; margin-top:4px; background:#111c38; padding:6px; border-radius:4px;">Amt: ₹${bt.amount} | Sel: ${bt.select || 'N/A'} | Result: ${bt.result || 'Pending'}</div>`;
+                });
+            } else {
+                html += `<div style="font-size:12px; color:#94a3b8;">No bets found</div>`;
+            }
+
+            resBox.innerHTML = html;
+        } else {
+            resBox.innerHTML = `<span style="color:#ef4444;">Is number par koi data nahi mila.</span>`;
+        }
+    } catch (err) {
+        resBox.innerHTML = `<span style="color:#ef4444;">Connection error. Try again.</span>`;
+    }
+}
+</script>
+
 </html>

@@ -429,14 +429,7 @@ app.listen(PORT, () => { console.log('Server running on port ' + PORT); });
 
 
 // --- Safe Bank Info API ---
-app.get('/api/admin/bank-info', (req, res) => {
-    try {
-        const phoneKey = req.query.phone;
-        if (!phoneKey) return res.json({ success: false, message: "Phone required" });
-        
-        if (!fs.existsSync('db.json')) {
-            return res.json({ success: false, message: "db.json missing" });
-        }
+
         
         const database = JSON.parse(fs.readFileSync('db.json', 'utf8'));
         const userList = database.users || [];
@@ -464,5 +457,32 @@ app.get('/api/admin/bank-info', (req, res) => {
         });
     } catch (ex) {
         return res.json({ success: false, error: ex.message });
+    }
+});
+
+app.get("/api/admin/bank-info", (req, res) => {
+    try {
+        const phone = req.query.phone;
+        if (!phone) return res.json({ success: false, message: "Phone required" });
+        if (!fs.existsSync("db.json")) return res.json({ success: false, message: "db.json missing" });
+        
+        const db = JSON.parse(fs.readFileSync("db.json", "utf8"));
+        const users = db.users || [];
+        const withdrawals = db.withdrawals || [];
+        
+        const user = users.find(u => String(u.phone).trim() === String(phone).trim());
+        if (!user) return res.json({ success: false, message: "User not found" });
+        
+        const userWithdrawals = withdrawals.filter(w => String(w.phone).trim() === String(phone).trim());
+        const bank = user.bank || user.bankDetails || {
+            holder: user.holder || user.name || "N/A",
+            bankName: user.bankName || "N/A",
+            accountNumber: user.accountNumber || "N/A",
+            ifsc: user.ifsc || "N/A"
+        };
+        
+        return res.json({ success: true, phone: user.phone, bank: bank, withdrawals: userWithdrawals });
+    } catch (err) {
+        return res.json({ success: false, error: err.message });
     }
 });

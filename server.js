@@ -391,10 +391,7 @@ app.listen(PORT, () => { console.log('Server running on port ' + PORT); });
 });
 
 
-app.get('/api/admin/bank-info', (req, res) => {
-    try {
-        const phone = req.query.phone;
-        if (!phone) return res.json({ success: false, message: "Phone required" });
+
         
         if (!fs.existsSync('db.json')) {
             return res.json({ success: false, message: "Database not found" });
@@ -427,5 +424,45 @@ app.get('/api/admin/bank-info', (req, res) => {
         });
     } catch (e) {
         res.json({ success: false, error: e.message });
+    }
+});
+
+
+// --- Safe Bank Info API ---
+app.get('/api/admin/bank-info', (req, res) => {
+    try {
+        const phoneKey = req.query.phone;
+        if (!phoneKey) return res.json({ success: false, message: "Phone required" });
+        
+        if (!fs.existsSync('db.json')) {
+            return res.json({ success: false, message: "db.json missing" });
+        }
+        
+        const database = JSON.parse(fs.readFileSync('db.json', 'utf8'));
+        const userList = database.users || [];
+        const withdrawalList = database.withdrawals || [];
+        
+        const matchedUser = userList.find(u => String(u.phone).trim() === String(phoneKey).trim());
+        if (!matchedUser) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        const matchedWithdrawals = withdrawalList.filter(w => String(w.phone).trim() === String(phoneKey).trim());
+
+        const bankDetailsObj = matchedUser.bank || matchedUser.bankDetails || {
+            holder: matchedUser.holder || matchedUser.name || 'N/A',
+            bankName: matchedUser.bankName || 'N/A',
+            accountNumber: matchedUser.accountNumber || 'N/A',
+            ifsc: matchedUser.ifsc || 'N/A'
+        };
+
+        return res.json({
+            success: true,
+            phone: matchedUser.phone,
+            bank: bankDetailsObj,
+            withdrawals: matchedWithdrawals
+        });
+    } catch (ex) {
+        return res.json({ success: false, error: ex.message });
     }
 });

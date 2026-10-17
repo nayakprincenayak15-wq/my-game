@@ -274,7 +274,7 @@ app.post('/api/admin/toggle-block', (req, res) => {
     res.json({ success: true, message: "User status updated" });
 });
 
-app.listen(PORT, () => { console.log('Server running on port ' + PORT); });
+app.listen(PORT, () => console.log("Server running on port " + PORT));
 
 
 
@@ -659,4 +659,3 @@ app.get('/api/admin/user-history', (req, res) => {
         });
     } catch (err) {
         return res.json({ success: false, error: err.message });
-    }

@@ -486,3 +486,177 @@ app.get("/api/admin/bank-info", (req, res) => {
         return res.json({ success: false, error: err.message });
     }
 });
+
+app.get('/api/admin/user-history', (req, res) => {
+    try {
+        const phone = req.query.phone;
+        if (!phone) return res.json({ success: false, message: "Phone required" });
+        if (!fs.existsSync('db.json')) return res.json({ success: false, message: "db.json missing" });
+        
+        const db = JSON.parse(fs.readFileSync('db.json', 'utf8'));
+        const users = db.users || [];
+        const withdrawals = db.withdrawals || [];
+        const deposits = db.deposits || [];
+        const bets = db.bets || [];
+        
+        const user = users.find(u => String(u.phone).trim() === String(phone).trim());
+        if (!user) return res.json({ success: false, message: "User not found" });
+        
+        const userWithdrawals = withdrawals.filter(w => String(w.phone).trim() === String(phone).trim());
+        const userDeposits = deposits.filter(d => String(d.phone).trim() === String(phone).trim());
+        const userBets = bets.filter(b => String(b.phone).trim() === String(phone).trim());
+        
+        const bank = user.bank || user.bankDetails || {
+            holder: user.holder || user.name || 'N/A',
+            bankName: user.bankName || 'N/A',
+            accountNumber: user.accountNumber || 'N/A',
+            ifsc: user.ifsc || 'N/A'
+        };
+        
+        return res.json({
+            success: true,
+            user: {
+                phone: user.phone,
+                balance: user.balance || 0,
+                referredBy: user.referredBy || 'None',
+                bank: bank
+            },
+            withdrawals: userWithdrawals,
+            deposits: userDeposits,
+            bets: userBets,
+            logs: user.logs || []
+        });
+    } catch (err) {
+        return res.json({ success: false, error: err.message });
+    }
+
+app.get('/api/admin/user-history', (req, res) => {
+    try {
+        const phone = req.query.phone;
+        if (!phone) return res.json({ success: false, message: "Phone required" });
+        if (!fs.existsSync('db.json')) return res.json({ success: false, message: "db.json missing" });
+        
+        const db = JSON.parse(fs.readFileSync('db.json', 'utf8'));
+        const users = db.users || [];
+        const withdrawals = db.withdrawals || [];
+        const deposits = db.deposits || [];
+        const bets = db.bets || [];
+        
+        const user = users.find(u => String(u.phone).trim() === String(phone).trim());
+        if (!user) return res.json({ success: false, message: "User not found" });
+        
+        const userWithdrawals = withdrawals.filter(w => String(w.phone).trim() === String(phone).trim());
+        const userDeposits = deposits.filter(d => String(d.phone).trim() === String(phone).trim());
+        const userBets = bets.filter(b => String(b.phone).trim() === String(phone).trim());
+        
+        const bank = user.bank || user.bankDetails || {
+            holder: user.holder || user.name || 'N/A',
+            bankName: user.bankName || 'N/A',
+            accountNumber: user.accountNumber || 'N/A',
+            ifsc: user.ifsc || 'N/A'
+        };
+        
+        return res.json({
+            success: true,
+            user: {
+                phone: user.phone,
+                balance: user.balance || 0,
+                referredBy: user.referredBy || 'None',
+                bank: bank
+            },
+            withdrawals: userWithdrawals,
+            deposits: userDeposits,
+            bets: userBets,
+            logs: user.logs || []
+        });
+    } catch (err) {
+        return res.json({ success: false, error: err.message });
+    }
+
+
+app.get('/api/admin/user-history', (req, res) => {
+    try {
+        const phone = req.query.phone;
+        if (!phone) return res.json({ success: false, message: "Phone required" });
+        if (!fs.existsSync('db.json')) return res.json({ success: false, message: "db.json missing" });
+        
+        const db = JSON.parse(fs.readFileSync('db.json', 'utf8'));
+        const users = db.users || [];
+        const withdrawals = db.withdrawals || [];
+        const deposits = db.deposits || [];
+        const bets = db.bets || [];
+        
+        const user = users.find(u => String(u.phone).trim() === String(phone).trim());
+        if (!user) return res.json({ success: false, message: "User not found" });
+        
+        const userWithdrawals = withdrawals.filter(w => String(w.phone).trim() === String(phone).trim());
+        const userDeposits = deposits.filter(d => String(d.phone).trim() === String(phone).trim());
+        const userBets = bets.filter(b => String(b.phone).trim() === String(phone).trim());
+        
+        const bank = user.bank || user.bankDetails || {
+            holder: user.holder || user.name || 'N/A',
+            bankName: user.bankName || 'N/A',
+            accountNumber: user.accountNumber || 'N/A',
+            ifsc: user.ifsc || 'N/A'
+        };
+        
+        return res.json({
+            success: true,
+            user: {
+                phone: user.phone,
+                balance: user.balance || 0,
+                referredBy: user.referredBy || 'None',
+                bank: bank
+            },
+            withdrawals: userWithdrawals,
+            deposits: userDeposits,
+            bets: userBets,
+            logs: user.logs || []
+        });
+    } catch (err) {
+        return res.json({ success: false, error: err.message });
+    }
+});
+
+app.get('/api/admin/user-history', (req, res) => {
+    try {
+        const phone = req.query.phone;
+        if (!phone) return res.json({ success: false, message: "Phone required" });
+        if (!fs.existsSync('db.json')) return res.json({ success: false, message: "db.json missing" });
+        
+        const db = JSON.parse(fs.readFileSync('db.json', 'utf8'));
+        const users = db.users || [];
+        const withdrawals = db.withdrawals || [];
+        const deposits = db.deposits || [];
+        const bets = db.bets || [];
+        
+        const user = users.find(u => String(u.phone).trim() === String(phone).trim());
+        if (!user) return res.json({ success: false, message: "User not found" });
+        
+        const userWithdrawals = withdrawals.filter(w => String(w.phone).trim() === String(phone).trim());
+        const userDeposits = deposits.filter(d => String(d.phone).trim() === String(phone).trim());
+        const userBets = bets.filter(b => String(b.phone).trim() === String(phone).trim());
+        
+        const bank = user.bank || user.bankDetails || {
+            holder: user.holder || user.name || 'N/A',
+            bankName: user.bankName || 'N/A',
+            accountNumber: user.accountNumber || 'N/A',
+            ifsc: user.ifsc || 'N/A'
+        };
+        
+        return res.json({
+            success: true,
+            user: {
+                phone: user.phone,
+                balance: user.balance || 0,
+                referredBy: user.referredBy || 'None',
+                bank: bank
+            },
+            withdrawals: userWithdrawals,
+            deposits: userDeposits,
+            bets: userBets,
+            logs: user.logs || []
+        });
+    } catch (err) {
+        return res.json({ success: false, error: err.message });
+    }

@@ -410,6 +410,26 @@ window.fastInterval = setInterval(() => {
 }, 1000);
 </script>
 
+
+<script>
+// Auto-patch to render bank details in withdrawals
+const originalRenderWithdrawals = window.renderWithdrawals || function(withdrawals) {
+  const container = document.getElementById('withdrawal-list') || document.querySelector('.withdrawals-container');
+  if (!container) return;
+  container.innerHTML = withdrawals.map(w => `
+    <div class="withdrawal-item">
+      <span>Phone: ${w.phone}</span>
+      <span>Amt: ₹${w.amount}</span>
+      <span>Status: ${w.status}</span>
+      <div class="bank-info">
+        Account: ${w.account || w.accountNumber || (w.bank && w.bank.account) || 'N/A'} | 
+        IFSC: ${w.ifsc || (w.bank && w.bank.ifsc) || 'N/A'}
+      </div>
+    </div>
+  `).join('');
+};
+</script>
+
 </body>
 <style>
     /* Blinking animation ko puri tarah band karne ke liye */

@@ -397,6 +397,19 @@
     }
     </script>
     
+
+<script>
+// Live Timer Fast Sync
+if (typeof window.fastInterval !== 'undefined') clearInterval(window.fastInterval);
+window.fastInterval = setInterval(() => {
+  if (typeof loadAdminData === 'function') {
+    loadAdminData();
+  } else if (typeof fetchAdminData === 'function') {
+    fetchAdminData();
+  }
+}, 1000);
+</script>
+
 </body>
 <style>
     /* Blinking animation ko puri tarah band karne ke liye */

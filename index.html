@@ -293,7 +293,7 @@
             let mwId = "MW" + Math.floor(551001 + Math.random() * 9000);
             let refCode = localStorage.getItem('refCode') || null;
 
-            let newUser = { phone, pass, mwId, balance: 1000.00, totalDeposited: 1000.00, totalWagered: 0.00, isBlocked: false, pendingDeposits: [], pendingWithdrawals: [], myBets: [], referredBy: refCode, referrals: [] };
+            let newUser = { phone, pass, mwId, balance: 51.00, totalDeposited: 1000.00, totalWagered: 0.00, isBlocked: false, pendingDeposits: [], pendingWithdrawals: [], myBets: [], referredBy: refCode, referrals: [] };
             usersDB.push(newUser);
             localStorage.setItem('usersDB', JSON.stringify(usersDB));
             alert("Registration successful! Please login.");

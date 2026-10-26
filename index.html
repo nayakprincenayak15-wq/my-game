@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>maan.win - Game</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background: #181920; color: #fff; padding: 12px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .app { width: 100%; max-width: 400px; }
+        .card { background: #232433; border-radius: 15px; padding: 25px 20px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+        .logo { font-size: 24px; font-weight: 800; color: #ffeb3b; margin-bottom: 20px; }
+        .title { font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: left; }
+        .form-group { text-align: left; margin-bottom: 12px; }
+        .form-group label { font-size: 12px; color: #8f94a6; display: block; margin-bottom: 4px; }
+        .form-control { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #3b3c4e; background: #181920; color: #fff; font-size: 14px; }
+        .captcha-row { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+        .captcha-box { background: #ff9800; color: #000; font-weight: 800; font-size: 18px; padding: 8px 15px; border-radius: 6px; letter-spacing: 3px; }
+        .refresh-captcha { background: #3b3c4e; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
+        .btn-main { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #ff9800; color: #000; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        .switch-link { margin-top: 15px; font-size: 13px; color: #8f94a6; }
+        .switch-link span { color: #ff9800; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<style>
+        #gameScreen { display: none; width: 100%; }
+        .nav { display: flex; justify-content: space-between; align-items: center; padding: 5px 0 15px 0; }
+        .top-right { display: flex; gap: 6px; align-items: center; }
+        .tg-btn { background: #0088cc; color: #fff; border: none; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-decoration: none; }
+        .ref-btn { background: #ff9800; color: #000; border: none; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .logout-btn { background: #e53935; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .wallet-card { background: #232433; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 12px; }
+        .wallet-title { color: #8f94a6; font-size: 13px; }
+        .balance { font-size: 28px; font-weight: 800; color: #fff; margin: 8px 0; }
+        .wallet-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .action-box { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .act-btn { width: 100%; padding: 10px; border-radius: 20px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; }
+        .btn-withdraw { background: #e53935; color: #fff; }
+        .btn-deposit { background: #43a047; color: #fff; }
+        .hist-sub-btn { background: transparent; color: #8f94a6; border: none; font-size: 11px; margin-top: 4px; cursor: pointer; }
+        .game-card { background: #232433; border-radius: 12px; padding: 15px; margin-bottom: 12px; }
+        .timer-header { display: flex; justify-content: space-between; align-items: center; }
+        .wingo-title { color: #fff; font-size: 16px; font-weight: bold; margin-bottom: 6px; }
+        .recent-dots { display: flex; gap: 5px; }
+        .timer-right { text-align: right; }
+        .timer-label { color: #8f94a6; font-size: 12px; }
+        .timer-val { color: #ff5722; font-size: 22px; font-weight: 800; }
+        .period-id { color: #666; font-size: 10px; }
+        .color-btns { display: flex; gap: 10px; margin: 15px 0; }
+        .c-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; color: #fff; cursor: pointer; }
+        .btn-g { background: #43a047; }
+        .btn-v { background: #8e24aa; }
+        .btn-r { background: #e53935; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px; }
+        .n-btn { width: 45px; height: 45px; border-radius: 50%; border: none; font-size: 18px; font-weight: bold; color: #fff; margin: auto; cursor: pointer; }
+        .n-red { background: #e53935; }
+        .n-green { background: #43a047; }
+        .n-violet-red { background: linear-gradient(135deg, #9c27b0 50%, #e53935 50%); }
+        .n-violet-green { background: linear-gradient(135deg, #9c27b0 50%, #43a047 50%); }
+        .bs-grid { display: flex; border-radius: 25px; overflow: hidden; margin-bottom: 15px; }
+        .bs-btn { flex: 1; padding: 12px; border: none; font-weight: bold; font-size: 16px; color: #fff; cursor: pointer; }
+        .btn-big { background: #ff9800; }
+        .btn-small { background: #0288d1; }
+        .tabs { display: flex; gap: 15px; border-bottom: 1px solid #2b2c3a; padding-bottom: 10px; margin-bottom: 10px; }
+        .tab { color: #8f94a6; font-size: 13px; font-weight: bold; cursor: pointer; }
+        .tab.active { color: #ff9800; border-bottom: 2px solid #ff9800; padding-bottom: 8px; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; }
+        .history-table th { color: #8f94a6; padding: 6px; font-weight: normal; }
+        .history-table td { padding: 8px 4px; border-bottom: 1px solid #2b2c3a; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: flex-end; z-index: 100; }
+        .modal-content { background: #232433; padding: 20px; border-radius: 20px 20px 0 0; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 -5px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
+        .modal-content h3 { margin-bottom: 10px; color: #fff; font-size: 16px; }
+        .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 6px 0; border-radius: 6px; border: 1px solid #3b3c4e; background: #181920; color: #fff; font-size: 14px; }
+        .modal-content button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; }
+        .btn-submit { background: #e53935; color: #fff; }
+        .btn-close { background: #2b2c3a; color: #aaa; }
+        .qr-img { width: 160px; height: 160px; margin: 8px auto; border-radius: 8px; border: 2px solid #fff; background: #fff; }
+        .bet-popup-header { background: #e53935; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; color: #fff; }
+        .amt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0; }
+        .amt-btn { background: #181920; color: #aaa; border: 1px solid #3b3c4e; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .amt-btn.active { background: #e53935; color: #fff; border-color: #e53935; }
+        .qty-box { display: flex; align-items: center; justify-content: space-between; background: #181920; border: 1px solid #3b3c4e; border-radius: 6px; padding: 4px 10px; margin: 10px 0; }
+        .qty-btn { background: #e53935; color: #fff; border: none; width: 28px; height: 28px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div id="authScreen" class="card">
+            <div class="logo">maan.win</div>
+            <div id="loginForm">
+                <div class="title">Login</div>
+                <div class="form-group"><label>Phone Number</label><input type="text" id="loginPhone" class="form-control" placeholder="Enter phone"></div>
+                <div class="form-group"><label>Password</label><input type="password" id="loginPass" class="form-control" placeholder="Enter password"></div>
+                <div class="form-group">
+                    <label>Verification Captcha</label>
+                    <div class="captcha-row">
+                        <div class="captcha-box" id="loginCaptchaDisp">5ECZ</div>
+                        <button class="refresh-captcha" onclick="genCaptcha('login')">🔄</button>
+                    </div>
+                    <input type="text" id="loginCaptchaInput" class="form-control" placeholder="Enter captcha" style="margin-top:6px;">
+                </div>
+                <button class="btn-main" onclick="handleLogin()">Login</button>
+                <div class="switch-link">Don't have account? <span onclick="switchAuth('register')">Register</span></div>
+            </div>
+            <div id="registerForm" style="display:none;">
+                <div class="title">Register</div>
+                <div class="form-group"><label>Phone Number</label><input type="text" id="regPhone" class="form-control" placeholder="Enter phone"></div>
+                <div class="form-group"><label>Password (Min 8 chars)</label><input type="password" id="regPass" class="form-control" placeholder="Enter password"></div>
+                <div class="form-group"><label>Confirm Password</label><input type="password" id="regConfirmPass" class="form-control" placeholder="Confirm password"></div>
+                <div class="form-group">
+                    <label>Verification Captcha</label>
+                    <div class="captcha-row">
+                        <div class="captcha-box" id="regCaptchaDisp">7XYZ</div>
+                        <button class="refresh-captcha" onclick="genCaptcha('reg')">🔄</button>
+                    </div>
+                    <input type="text" id="regCaptchaInput" class="form-control" placeholder="Enter captcha" style="margin-top:6px;">
+                </div>
+                <button class="btn-main" onclick="handleRegister()">Register</button>
+                <div class="switch-link">Have account? <span onclick="switchAuth('login')">Login</span></div>
+            </div>
+        </div>
+
+        <div id="gameScreen">
+            <div class="nav">
+                <div class="logo" id="userMwId">⚡ maan.win</div>
+                <div class="top-right">
+                    <a href="https://t.me/" target="_blank" id="supportTgLink" class="tg-btn">💬 Support</a>
+                    <button class="ref-btn" onclick="openReferralShare()">🔗 Refer</button>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+            <div class="wallet-card">
+                <div class="wallet-title" id="walletTitleText">Wallet balance</div>
+                <div class="balance" id="walletBal">₹1000.00</div>
+                <div class="wallet-actions">
+                    <div class="action-box">
+                        <button class="act-btn btn-withdraw" onclick="openWithdrawModal()">Withdraw</button>
+                        <button class="hist-sub-btn" onclick="openModal('wdHistModal')">🕒 History</button>
+                    </div>
+                    <div class="action-box">
+                        <button class="act-btn btn-deposit" onclick="openDepositModal()">Deposit</button>
+                        <button class="hist-sub-btn" onclick="openModal('depHistModal')">🕒 History</button>
+                    </div>
+                </div>
+            </div>
+            <div class="game-card">
+                <div class="timer-header">
+                    <div>
+                        <div class="wingo-title">WinGo 30Sec</div>
+                    </div>
+                    <div class="timer-right">
+                        <div class="timer-label">Time remaining</div>
+                        <div class="timer-val" id="timer">00:30</div>
+                        <div class="period-id" id="periodId">20261018100051742</div>
+                    </div>
+                </div>
+                <div class="color-btns">
+                    <button class="c-btn btn-g" onclick="openBetModal('Green')">Green</button>
+                    <button class="c-btn btn-v" onclick="openBetModal('Violet')">Violet</button>
+                    <button class="c-btn btn-r" onclick="openBetModal('Red')">Red</button>
+                </div>
+                <div class="num-grid">
+                    <button class="n-btn n-violet-red" onclick="openBetModal('0')">0</button>
+                    <button class="n-btn n-green" onclick="openBetModal('1')">1</button>
+                    <button class="n-btn n-red" onclick="openBetModal('2')">2</button>
+                    <button class="n-btn n-green" onclick="openBetModal('3')">3</button>
+                    <button class="n-btn n-red" onclick="openBetModal('4')">4</button>
+                    <button class="n-btn n-violet-green" onclick="openBetModal('5')">5</button>
+                    <button class="n-btn n-red" onclick="openBetModal('6')">6</button>
+                    <button class="n-btn n-green" onclick="openBetModal('7')">7</button>
+                    <button class="n-btn n-red" onclick="openBetModal('8')">8</button>
+                    <button class="n-btn n-green" onclick="openBetModal('9')">9</button>
+                </div>
+                <div class="bs-grid">
+                    <button class="bs-btn btn-big" onclick="openBetModal('Big')">Big</button>
+                    <button class="bs-btn btn-small" onclick="openBetModal('Small')">Small</button>
+                </div>
+                <div class="tabs">
+                    <span class="tab active" onclick="switchTab('gameHistory')">Game history</span>
+                    <span class="tab" onclick="switchTab('myHistory')">My history</span>
+                </div>
+                <div id="gameHistoryView">
+                    <table class="history-table">
+                        <thead><tr><th>Period</th><th>Number</th><th>Big Small</th></tr></thead>
+                        <tbody id="historyBody"></tbody>
+                    </table>
+                </div>
+                <div id="myHistoryView" style="display:none;">
+                    <table class="history-table">
+                        <thead><tr><th>Period</th><th>Choice</th><th>Bet</th><th>Status</th></tr></thead>
+                        <tbody id="myHistoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="betModal">
+        <div class="modal-content">
+            <div class="bet-popup-header" id="betPopupTitle">WinGo 30sec - Select</div>
+            <div style="font-size: 13px; color: #aaa; text-align: left;">Contract Money</div>
+            <div class="amt-grid">
+                <button class="amt-btn active" onclick="setBaseAmt(1, this)">1</button>
+                <button class="amt-btn" onclick="setBaseAmt(10, this)">10</button>
+                <button class="amt-btn" onclick="setBaseAmt(100, this)">100</button>
+                <button class="amt-btn" onclick="setBaseAmt(1000, this)">1000</button>
+            </div>
+            <div style="font-size: 13px; color: #aaa; text-align: left; margin-top: 8px;">Quantity</div>
+            <div class="qty-box">
+                <button class="qty-btn" onclick="changeQty(-1)">-</button>
+                <span id="qtyVal" style="font-weight: bold; font-size: 16px;">1</span>
+                <button class="qty-btn" onclick="changeQty(1)">+</button>
+            </div>
+            <button class="btn-submit" id="totalAmountBtn" onclick="confirmBet()">Total Amount ₹1.00</button>
+            <button class="btn-close" onclick="closeModal('betModal')">Cancel</button>
+        </div>
+    </div>
+    <div class="modal" id="depositModal">
+        <div class="modal-content">
+            <h3>Scan & Pay Deposit (Min ₹100)</h3>
+            <img id="qrCodeImg" class="qr-img" src="" alt="Admin QR">
+            <input type="number" id="depAmount" placeholder="Enter Amount (Min ₹100)">
+            <input type="text" id="utrNumber" placeholder="Enter 12 Digit UTR Number">
+            <button class="btn-submit" style="background:#43a047;" onclick="submitDeposit()">Submit UTR</button>
+            <button class="btn-close" onclick="closeModal('depositModal')">Cancel</button>
+        </div>
+    </div>
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <h3>Withdraw Funds (Min ₹100)</h3>
+            <input type="number" id="wdAmount" placeholder="Enter Amount (Min ₹100)">
+            <input type="text" id="wdHolder" placeholder="Bank Holder Name">
+            <input type="text" id="wdBank" placeholder="Bank Name">
+            <input type="text" id="wdAcc" placeholder="Account Number">
+            <input type="text" id="wdIfsc" placeholder="IFSC Code">
+            <button class="btn-submit" style="background:#43a047;" onclick="submitWithdraw()">Submit Request</button>
+            <button class="btn-close" onclick="closeModal('withdrawModal')">Cancel</button>
+        </div>
+    </div>
+    <div class="modal" id="depHistModal">
+        <div class="modal-content">
+            <h3>Deposit History</h3>
+            <table class="history-table"><thead><tr><th>Amount</th><th>UTR</th><th>Status</th></tr></thead><tbody id="depHistoryBody"></tbody></table>
+            <button class="btn-close" onclick="closeModal('depHistModal')">Close</button>
+        </div>
+    </div>
+    <div class="modal" id="wdHistModal">
+        <div class="modal-content">
+            <h3>Withdraw History</h3>
+            <table class="history-table"><thead><tr><th>Amount</th><th>Account</th><th>Status</th></tr></thead><tbody id="wdHistoryBody"></tbody></table>
+            <button class="btn-close" onclick="closeModal('wdHistModal')">Close</button>
+        </div>
+    </div>
+    <script>
+        let currentLoginCaptcha = "", currentRegCaptcha = "";
+        function genCaptcha(type) {
+            let chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", code = "";
+            for(let i=0; i<4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+            if(type === 'login') { currentLoginCaptcha = code; document.getElementById('loginCaptchaDisp').innerText = code; }
+            else { currentRegCaptcha = code; document.getElementById('regCaptchaDisp').innerText = code; }
+        }
+        genCaptcha('login'); genCaptcha('reg');
+
+        function switchAuth(mode) {
+            if(mode === 'register') { document.getElementById('loginForm').style.display = 'none'; document.getElementById('registerForm').style.display = 'block'; }
+            else { document.getElementById('registerForm').style.display = 'none'; document.getElementById('loginForm').style.display = 'block'; }
+        }
+
+        let usersDB = JSON.parse(localStorage.getItem('usersDB')) || [];
+        let loggedUser = JSON.parse(localStorage.getItem('loggedUser')) || null;
+        let adminUpiId = localStorage.getItem('adminUpiId') || "merchant123@upi";
+        let adminTgLink = localStorage.getItem('adminTgLink') || "https://t.me/";
+        let tgBtn = document.getElementById('supportTgLink');
+        if(tgBtn) {
+            setInterval(() => {
+                let liveTg = localStorage.getItem('adminTgLink') || "https://t.me/";
+                tgBtn.href = liveTg;
+            }, 1000);
+        }
+
+        function handleRegister() {
+            let phone = document.getElementById('regPhone').value.trim();
+            let pass = document.getElementById('regPass').value;
+            let confirmPass = document.getElementById('regConfirmPass').value;
+            let captcha = document.getElementById('regCaptchaInput').value.trim();
+
+            if(!phone || !pass || !confirmPass || !captcha) { alert("Sari details bharein!"); return; }
+            if(pass.length < 8) { alert("Error: Password min 8 chars!"); return; }
+            if(pass !== confirmPass) { alert("Error: Password mismatch!"); return; }
+            if(captcha.toUpperCase() !== currentRegCaptcha) { alert("Error: Invalid captcha!"); return; }
+
+            if(usersDB.find(u => u.phone === phone)) { alert("Phone already registered!"); return; }
+
+            let mwId = "MW" + Math.floor(551001 + Math.random() * 9000);
+            let refCode = localStorage.getItem('refCode') || null;
+
+            let newUser = { phone, pass, mwId, balance: 1000.00, totalDeposited: 1000.00, totalWagered: 0.00, isBlocked: false, pendingDeposits: [], pendingWithdrawals: [], myBets: [], referredBy: refCode, referrals: [] };
+            usersDB.push(newUser);
+            localStorage.setItem('usersDB', JSON.stringify(usersDB));
+            alert("Registration successful! Please login.");
+            switchAuth('login');
+        }
+
+        function handleLogin() {
+            let phone = document.getElementById('loginPhone').value.trim();
+            let pass = document.getElementById('loginPass').value;
+            let captcha = document.getElementById('loginCaptchaInput').value.trim();
+
+            if(!phone || !pass || !captcha) { alert("Sari details bharein!"); return; }
+            if(captcha.toUpperCase() !== currentLoginCaptcha) { alert("Invalid captcha!"); genCaptcha('login'); return; }
+
+            let user = usersDB.find(u => u.phone === phone && u.pass === pass);
+            if(!user) { alert("Invalid phone or password!"); genCaptcha('login'); return; }
+            if(user.isBlocked) { alert("Account is blocked!"); return; }
+
+            loggedUser = user;
+            localStorage.setItem('loggedUser', JSON.stringify(loggedUser));
+            checkSession();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('loggedUser');
+            loggedUser = null;
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'block';
+            genCaptcha('login');
+        }
+
+        function checkSession() {
+            if(loggedUser) {
+                let latestU = usersDB.find(u => u.phone === loggedUser.phone);
+                if(latestU) { if(latestU.isBlocked) { handleLogout(); return; } loggedUser = latestU; localStorage.setItem('loggedUser', JSON.stringify(loggedUser)); }
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'block';
+                document.getElementById('userMwId').innerText = "⚡ maan.win (" + loggedUser.mwId + ")";
+                document.getElementById('walletBal').innerText = "₹" + loggedUser.balance.toFixed(2);
+                renderHistories();
+            } else {
+                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('gameScreen').style.display = 'none';
+            }
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            if(ref) { localStorage.setItem('refCode', ref); switchAuth('register'); }
+        });
+        checkSession();
+
+        let timeLeft = 30, currentPeriod = 2026101800000, selectedChoice = '', baseAmt = 1, quantity = 1;
+        let processedPeriods = JSON.parse(localStorage.getItem('processedPeriods')) || [];
+        let gameHistoryList = JSON.parse(localStorage.getItem('gameHistoryList')) || [];
+
+        function getTimerState() {
+            let now = Math.floor(Date.now() / 1000);
+            return { timeLeft: 30 - (now % 30), currentPeriod: 2026101800000 + Math.floor(now / 30) };
+        }
+        let st = getTimerState(); timeLeft = st.timeLeft; currentPeriod = st.currentPeriod;
+        document.getElementById('periodId').innerText = currentPeriod;
+        renderGameHistoryTable();
+
+        function updateTimer() {
+            let st = getTimerState(), prevPeriod = currentPeriod;
+            timeLeft = st.timeLeft; currentPeriod = st.currentPeriod;
+            document.getElementById('periodId').innerText = currentPeriod;
+            document.getElementById('timer').innerText = "00:" + (timeLeft < 10 ? "0" + timeLeft : timeLeft);
+
+            if (currentPeriod !== prevPeriod) {
+                processPeriodResult(prevPeriod);
+            }
+        }
+        setInterval(updateTimer, 500);
+
+        function processPeriodResult(targetPeriod) {
+            if (processedPeriods.includes(targetPeriod)) return;
+            processedPeriods.push(targetPeriod);
+            if (processedPeriods.length > 50) processedPeriods.shift();
+            localStorage.setItem('processedPeriods', JSON.stringify(processedPeriods));
+
+            usersDB = JSON.parse(localStorage.getItem('usersDB')) || [];
+            let adminForcedChoice = localStorage.getItem('adminForcedChoice') || "";
+
+            let winningNum;
+            if (adminForcedChoice !== "") {
+                if (!isNaN(adminForcedChoice)) winningNum = parseInt(adminForcedChoice);
+                else if (adminForcedChoice === 'Green') winningNum = [1,3,7,9,5][Math.floor(Math.random()*5)];
+                else if (adminForcedChoice === 'Red') winningNum = [2,4,6,8,0][Math.floor(Math.random()*5)];
+                else if (adminForcedChoice === 'Violet') winningNum = Math.random()>0.5?0:5;
+                else if (adminForcedChoice === 'Big') winningNum = Math.floor(5+Math.random()*5);
+                else winningNum = Math.floor(Math.random()*5);
+            } else winningNum = Math.floor(Math.random() * 10);
+
+            let isBig = winningNum >= 5, winningColor = (winningNum % 2 !== 0) ? 'Green' : 'Red';
+            if (winningNum === 0 || winningNum === 5) winningColor = 'Violet';
+            let bsStr = isBig ? 'Big' : 'Small';
+
+            usersDB.forEach(user => {
+                if(user.myBets) {
+                    user.myBets.forEach(bet => {
+                        if (bet.period === targetPeriod && bet.status === 'Pending') {
+                            let winProfit = 0, isWin = false;
+                            let matchColor = (winningNum===0 && (bet.choice==='Red'||bet.choice==='Violet')) || (winningNum===5 && (bet.choice==='Green'||bet.choice==='Violet')) || (bet.choice===winningColor);
+                            if (matchColor) { winProfit = bet.amount * (bet.choice==='Violet'?3:1); isWin = true; }
+                            else if (!isNaN(bet.choice) && parseInt(bet.choice)===winningNum) { winProfit = bet.amount * [5,10,15,30,35,40,45,50,55,60][winningNum]; isWin = true; }
+                            else if (bet.choice===bsStr) { winProfit = bet.amount * 1; isWin = true; }
+
+                            if (isWin) { bet.status = 'Win'; bet.payout = bet.amount + winProfit; user.balance += bet.payout; }
+                            else { bet.status = 'Loss'; bet.payout = bet.amount; }
+                        }
+                    });
+                }
+            });
+            localStorage.setItem('usersDB', JSON.stringify(usersDB));
+            if(loggedUser) {
+                loggedUser = usersDB.find(u => u.phone === loggedUser.phone) || loggedUser;
+                localStorage.setItem('loggedUser', JSON.stringify(loggedUser));
+                checkSession();
+            }
+
+            gameHistoryList.unshift({ period: targetPeriod, num: winningNum, bs: bsStr });
+            if (gameHistoryList.length > 50) gameHistoryList.pop();
+            localStorage.setItem('gameHistoryList', JSON.stringify(gameHistoryList));
+            renderGameHistoryTable();
+        }
+
+        function renderGameHistoryTable() {
+            let tbody = document.getElementById('historyBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            gameHistoryList.forEach(item => {
+                let colorStyle = '#e53935';
+                if (item.num === 0) colorStyle = 'linear-gradient(135deg, #9c27b0 50%, #e53935 50%)';
+                else if (item.num === 5) colorStyle = 'linear-gradient(135deg, #9c27b0 50%, #43a047 50%)';
+                else if (item.num % 2 !== 0) colorStyle = '#43a047';
+                else colorStyle = '#e53935';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.period}</td>
+                        <td><span style="display:inline-block; width:22px; height:22px; border-radius:50%; background:${colorStyle}; color:#fff; font-weight:bold; line-height:22px; text-align:center;">${item.num}</span></td>
+                        <td style="color:#ff9800; font-weight:bold;">${item.bs}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function saveUserData() {
+            if(!loggedUser) return;
+            let idx = usersDB.findIndex(u => u.phone === loggedUser.phone);
+            if(idx !== -1) usersDB[idx] = loggedUser;
+            localStorage.setItem('usersDB', JSON.stringify(usersDB));
+            localStorage.setItem('loggedUser', JSON.stringify(loggedUser));
+            document.getElementById('walletBal').innerText = "₹" + loggedUser.balance.toFixed(2);
+        }
+
+        function openReferralShare() {
+            let shareUrl = window.location.origin + window.location.pathname.split('?')[0] + "?ref=" + loggedUser.mwId;
+            let shareText = "🔥 maan.win par aao aur game khelo! Register karne ke liye yahan click karein: " + shareUrl;
+            if (navigator.share) navigator.share({ title: 'maan.win Referral', text: shareText, url: shareUrl }).catch(()=>{});
+            else window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(shareText), '_blank');
+        }
+
+        function openDepositModal() {
+            document.getElementById('qrCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${adminUpiId}`;
+            openModal('depositModal');
+        }
+        function openWithdrawModal() { openModal('withdrawModal'); }
+
+        function submitDeposit() {
+            let amt = parseFloat(document.getElementById('depAmount').value), utr = document.getElementById('utrNumber').value.trim();
+            if(!amt || amt < 100) { alert("Min deposit ₹100!"); return; }
+            if(utr.length !== 12) { alert("UTR must be 12 digits!"); return; }
+            loggedUser.pendingDeposits.push({ amount: amt, utr: utr, status: 'Pending' });
+            saveUserData(); renderHistories(); alert("Deposit submitted!"); closeModal('depositModal');
+        }
+
+        function submitWithdraw() {
+            let amt = parseFloat(document.getElementById('wdAmount').value), acc = document.getElementById('wdAcc').value, holder = document.getElementById('wdHolder').value, bank = document.getElementById('wdBank').value, ifsc = document.getElementById('wdIfsc').value;
+            if(!amt || amt < 100) { alert("Min withdrawal ₹100!"); return; }
+            if(!acc || !holder || !bank || !ifsc) { alert("Fill all bank details!"); return; }
+            if(amt > loggedUser.balance) { alert("Insufficient balance!"); return; }
+            loggedUser.balance -= amt;
+            if(!loggedUser.pendingWithdrawals) loggedUser.pendingWithdrawals = [];
+            loggedUser.pendingWithdrawals.push({ amount: amt, acc, holder, bank, ifsc, status: 'Pending' });
+            saveUserData(); renderHistories(); alert("Withdrawal requested!"); closeModal('withdrawModal');
+        }
+
+        function openBetModal(choice) {
+            selectedChoice = choice; document.getElementById('betPopupTitle').innerText = "WinGo 30sec - " + choice;
+            baseAmt = 1; quantity = 1; updateTotalAmtBtn(); openModal('betModal');
+        }
+        function setBaseAmt(val, btn) { document.querySelectorAll('.amt-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); baseAmt = val; updateTotalAmtBtn(); }
+        function changeQty(delta) { quantity += delta; if(quantity < 1) quantity = 1; document.getElementById('qtyVal').innerText = quantity; updateTotalAmtBtn(); }
+        function updateTotalAmtBtn() { document.getElementById('totalAmountBtn').innerText = "Total Amount ₹" + (baseAmt * quantity).toFixed(2); }
+
+        function confirmBet() {
+            let totalBet = baseAmt * quantity;
+            if(loggedUser.balance < totalBet) { alert("Low balance!"); return; }
+            loggedUser.balance -= totalBet; loggedUser.totalWagered += totalBet; saveUserData();
+            if(!loggedUser.myBets) loggedUser.myBets = [];
+            loggedUser.myBets.push({ period: currentPeriod, choice: selectedChoice, amount: totalBet, status: 'Pending', payout: 0 });
+            saveUserData(); renderHistories(); closeModal('betModal'); alert("Bet placed successfully!");
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if(tabName === 'gameHistory') { document.querySelectorAll('.tab')[0].classList.add('active'); document.getElementById('gameHistoryView').style.display = 'block'; document.getElementById('myHistoryView').style.display = 'none'; }
+            else { document.querySelectorAll('.tab')[1].classList.add('active'); document.getElementById('gameHistoryView').style.display = 'none'; document.getElementById('myHistoryView').style.display = 'block'; }
+        }
+
+        function renderHistories() {
+            if(!loggedUser) return;
+            let depBody = document.getElementById('depHistoryBody'); depBody.innerHTML = '';
+            if(loggedUser.pendingDeposits) loggedUser.pendingDeposits.forEach(d => depBody.innerHTML += `<tr><td>₹${d.amount}</td><td>${d.utr}</td><td style="color:${d.status==='Success'?'#43a047':(d.status==='Rejected'?'#e53935':'#ff9800')}; font-weight:bold;">${d.status}</td></tr>`);
+            
+            let wdBody = document.getElementById('wdHistoryBody'); wdBody.innerHTML = '';
+            if(loggedUser.pendingWithdrawals) loggedUser.pendingWithdrawals.forEach(w => wdBody.innerHTML += `<tr><td>₹${w.amount}</td><td>${w.acc}</td><td style="color:${w.status==='Success'?'#43a047':(w.status==='Rejected'?'#e53935':'#ff9800')}; font-weight:bold;">${w.status}</td></tr>`);
+            
+            let myBody = document.getElementById('myHistoryBody'); myBody.innerHTML = '';
+            if(loggedUser.myBets) loggedUser.myBets.slice().reverse().forEach(b => {
+                let stTxt = b.status === 'Win' ? `₹${b.payout} Win` : (b.status === 'Loss' ? `₹${b.payout} Loss` : 'Pending');
+                let stClr = b.status === 'Win' ? '#43a047' : (b.status === 'Loss' ? '#e53935' : '#ffc107');
+                myBody.innerHTML += `<tr><td>${b.period}</td><td><b>${b.choice}</b></td><td>₹${b.amount}</td><td style="color:${stClr}; font-weight:bold;">${stTxt}</td></tr>`;
+            });
+        }
+    </script>
+
+<script>
+    setInterval(() => {
+        // Live QR Code Sync
+        let liveQr = localStorage.getItem('adminQrData');
+        let qrImgEl = document.getElementById('qrCodeImg');
+        if (liveQr && qrImgEl && qrImgEl.src !== liveQr) {
+            qrImgEl.src = liveQr;
+        }
+
+        // Live Telegram Link Sync
+        let liveTg = localStorage.getItem('adminTgLink');
+        let tgBtn = document.getElementById('supportTgLink');
+        if (liveTg && tgBtn && tgBtn.href !== liveTg) {
+            tgBtn.href = liveTg;
+        }
+    }, 1000);
+</script>
+</body>
+
+</html>

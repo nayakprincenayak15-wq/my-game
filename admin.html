@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #181920; color: #fff; padding: 12px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .app { width: 100%; max-width: 420px; }
+        .card { background: #232433; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+        .title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #4facfe; }
+        .form-group { text-align: left; margin-bottom: 10px; }
+        .form-group label { font-size: 12px; color: #8f94a6; display: block; margin-bottom: 4px; }
+        .form-control { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #3b3c4e; background: #181920; color: #fff; font-size: 14px; }
+        .btn-main { width: 100%; padding: 12px; border-radius: 6px; border: none; background: #28a745; color: #fff; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #adminPanelScreen { display: none; text-align: left; }
+        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logout-btn { background: #e53935; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .admin-card { background: #232433; border-radius: 12px; padding: 15px; margin-bottom: 12px; }
+        .admin-card h3 { color: #ffeb3b; margin-bottom: 8px; font-size: 14px; }
+        .admin-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .admin-row input, .admin-row select { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #3b3c4e; background: #181920; color: #fff; font-size: 13px; }
+        .admin-btn { background: #ff9800; color: #000; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .history-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: center; margin-top: 5px; }
+        .history-table th { color: #8f94a6; padding: 6px; font-weight: normal; }
+        .history-table td { padding: 8px 4px; border-bottom: 1px solid #2b2c3a; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div id="adminLoginCard" class="card">
+            <div class="title">Admin Login</div>
+            <div class="form-group"><label>Username</label><input type="text" id="adminUser" class="form-control"></div>
+            <div class="form-group"><label>Password</label><input type="password" id="adminPass" class="form-control"></div>
+            <button class="btn-main" onclick="handleAdminLogin()">Login</button>
+        </div>
+
+        <div id="adminPanelScreen">
+            <div class="nav">
+                <h2 style="color:#ffeb3b; font-size:16px;">⚙️ Admin Panel</h2>
+                <div style="font-size:13px; color:#ff9800; font-weight:bold;" id="adminLiveTimer">00:30</div>
+                <button class="logout-btn" onclick="handleAdminLogout()">Logout</button>
+            </div>
+            <div class="admin-card">
+                <h3>1. Next Round Result Rigging</h3>
+                <div class="admin-row">
+                    <select id="adminRigChoice">
+                        <option value="">Random (Normal)</option>
+                        <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                        <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                        <option value="Green">Green</option><option value="Red">Red</option><option value="Violet">Violet</option>
+                        <option value="Big">Big</option><option value="Small">Small</option>
+                    </select>
+                    <button class="admin-btn" onclick="saveAdminRig()">Set</button>
+                </div>
+            </div>
+            <div class="admin-card">
+                <h3>2. Admin Settings (QR & Telegram)</h3>
+                <div class="admin-row">
+                    <input type="file" id="adminQrFile" accept="image/*" style="font-size:11px; color:#aaa;">
+                    <button class="admin-btn" onclick="saveAdminQr()">Upload QR</button>
+                </div>
+                <div class="admin-row" style="margin-top:8px;">
+                    <input type="text" id="adminTgInput" placeholder="Telegram Link">
+                    <button class="admin-btn" onclick="saveAdminTg()">Save TG</button>
+                </div>
+            </div>
+            <div class="admin-card">
+                <h3>3. Live User Bets</h3>
+                <table class="history-table"><thead><tr><th>User</th><th>Period</th><th>Choice</th><th>Amt</th></tr></thead><tbody id="adminLiveBetsBody"></tbody></table>
+            </div>
+            <div class="admin-card">
+                <h3>4. Deposit Approvals</h3>
+                <table class="history-table"><thead><tr><th>User</th><th>Amt</th><th>UTR</th><th>Action</th></tr></thead><tbody id="adminDepositsBody"></tbody></table>
+            </div>
+            <div class="admin-card">
+                <h3>5. Withdrawal Approvals</h3>
+                <table class="history-table"><thead><tr><th>User</th><th>Details</th><th>Action</th></tr></thead><tbody id="adminWithdrawalsBody"></tbody></table>
+            </div>
+            <div class="admin-card">
+                <h3>6. User Management</h3>
+                <div class="admin-row"><input type="text" id="adminSearchPhone" placeholder="Phone No."><button class="admin-btn" onclick="searchUserAdmin()">Search</button></div>
+                <div id="adminUserResult" style="margin-top:8px; font-size:12px; display:none;">
+                    <p id="auInfo" style="margin-bottom:6px;"></p>
+                    <div class="admin-row"><input type="number" id="auNewBal" placeholder="New Bal"><button class="admin-btn" onclick="adminUpdateBal()">Update</button></div>
+                    <div class="admin-row" style="margin-top:6px;"><input type="text" id="auNewPass" placeholder="New Pass"><button class="admin-btn" onclick="adminUpdatePass()">Pass</button></div>
+                    <div class="admin-row" style="margin-top:6px;"><button class="admin-btn" style="background:#e53935; flex:1;" id="auBlockBtn" onclick="adminToggleBlock()">Block</button></div>
+                </div>
+            </div>
+            <div class="admin-card">
+                <h3>7. A-to-Z User History Search</h3>
+                <div class="admin-row"><input type="text" id="adminHistSearchPhone" placeholder="Phone No."><button class="admin-btn" onclick="searchUserHistoryAdmin()">View</button></div>
+                <div id="adminFullHistoryResult" style="margin-top:8px; font-size:11px; max-height:200px; overflow-y:auto; background:#181920; padding:6px; border-radius:6px;"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let usersDB = JSON.parse(localStorage.getItem('usersDB')) || [];
+        let isAdminLoggedIn = localStorage.getItem('isAdminLoggedIn') === 'true';
+        if(isAdminLoggedIn) { document.getElementById('adminLoginCard').style.display = 'none'; document.getElementById('adminPanelScreen').style.display = 'block'; renderAdminPanelData(); }
+
+        function handleAdminLogin() {
+            let u = document.getElementById('adminUser').value.trim();
+            let p = document.getElementById('adminPass').value.trim();
+            if(u === "Prince" && p === "6396714538") {
+                localStorage.setItem('isAdminLoggedIn', 'true');
+                document.getElementById('adminLoginCard').style.display = 'none';
+                document.getElementById('adminPanelScreen').style.display = 'block';
+                renderAdminPanelData();
+            } else { alert("Galat Username ya Password!"); }
+        }
+
+        function handleAdminLogout() {
+            localStorage.removeItem('isAdminLoggedIn');
+            document.getElementById('adminPanelScreen').style.display = 'none';
+            document.getElementById('adminLoginCard').style.display = 'block';
+        }
+
+        function updateAdminTimer() {
+            let now = Math.floor(Date.now() / 1000);
+            let timeLeft = 30 - (now % 30);
+            let timerEl = document.getElementById('adminLiveTimer');
+            if(timerEl) timerEl.innerText = "00:" + (timeLeft < 10 ? "0" + timeLeft : timeLeft);
+        }
+        setInterval(updateAdminTimer, 500);
+
+        function saveAdminRig() { localStorage.setItem('adminForcedChoice', document.getElementById('adminRigChoice').value); alert("Saved!"); }
+        
+        function saveAdminQr() {
+            let fileInput = document.getElementById('adminQrFile');
+            if(fileInput.files && fileInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    localStorage.setItem('adminQrData', e.target.result);
+                    alert("QR Code Gallery se upload ho gaya!");
+                }
+                reader.readAsDataURL(fileInput.files[0]);
+            } else { alert("Pehle gallery se photo select kar!"); }
+        }
+
+        function saveAdminTg() { localStorage.setItem('adminTgLink', document.getElementById('adminTgInput').value.trim()); alert("Telegram link saved!"); }
+
+        function renderAdminPanelData() {
+            usersDB = JSON.parse(localStorage.getItem('usersDB')) || [];
+            let liveBody = document.getElementById('adminLiveBetsBody'); liveBody.innerHTML = '';
+            usersDB.forEach(u => {
+                if(u.myBets) u.myBets.filter(b => b.status === 'Pending').forEach(b => {
+                    liveBody.innerHTML += `<tr><td>${u.mwId}</td><td>${b.period}</td><td><b>${b.choice}</b></td><td>₹${b.amount}</td></tr>`;
+                });
+            });
+
+            let depBody = document.getElementById('adminDepositsBody'); depBody.innerHTML = '';
+            usersDB.forEach((u, uIdx) => {
+                if(u.pendingDeposits) u.pendingDeposits.forEach((d, dIdx) => {
+                    if(d.status === 'Pending') {
+                        depBody.innerHTML += `<tr><td>${u.mwId}</td><td>₹${d.amount}</td><td>${d.utr}</td><td><button class="admin-btn" style="background:#43a047; padding:4px;" onclick="approveDep(${uIdx}, ${dIdx})">✓</button> <button class="admin-btn" style="background:#e53935; padding:4px;" onclick="rejectDep(${uIdx}, ${dIdx})">✕</button></td></tr>`;
+                    }
+                });
+            });
+
+            let wdBody = document.getElementById('adminWithdrawalsBody'); wdBody.innerHTML = '';
+            usersDB.forEach((u, uIdx) => {
+                if(u.pendingWithdrawals) u.pendingWithdrawals.forEach((w, wIdx) => {
+                    if(w.status === 'Pending') {
+                        let details = `₹${w.amount}<br><small>${w.holder}, ${w.bank}<br>Acc:${w.acc} IFSC:${w.ifsc}</small>`;
+                        wdBody.innerHTML += `<tr><td>${u.mwId}</td><td>${details}</td><td><button class="admin-btn" style="background:#43a047; padding:4px;" onclick="approveWd(${uIdx}, ${wIdx})">✓</button> <button class="admin-btn" style="background:#e53935; padding:4px;" onclick="rejectWd(${uIdx}, ${wIdx})">✕</button></td></tr>`;
+                    }
+                });
+            });
+        }
+
+        function approveDep(uIdx, dIdx) {
+            let u = usersDB[uIdx], dep = u.pendingDeposits[dIdx];
+            dep.status = 'Success'; u.balance += dep.amount;
+            localStorage.setItem('usersDB', JSON.stringify(usersDB)); renderAdminPanelData(); alert("Approved!");
+        }
+        function rejectDep(uIdx, dIdx) { usersDB[uIdx].pendingDeposits[dIdx].status = 'Rejected'; localStorage.setItem('usersDB', JSON.stringify(usersDB)); renderAdminPanelData(); alert("Rejected!"); }
+        function approveWd(uIdx, wIdx) { usersDB[uIdx].pendingWithdrawals[wIdx].status = 'Success'; localStorage.setItem('usersDB', JSON.stringify(usersDB)); renderAdminPanelData(); alert("Success!"); }
+        function rejectWd(uIdx, wIdx) { let u = usersDB[uIdx], wd = u.pendingWithdrawals[wIdx]; wd.status = 'Rejected'; u.balance += wd.amount; localStorage.setItem('usersDB', JSON.stringify(usersDB)); renderAdminPanelData(); alert("Rejected & Refunded!"); }
+
+        let currentTargetUser = null;
+        function searchUserAdmin() {
+            let phone = document.getElementById('adminSearchPhone').value.trim();
+            let u = usersDB.find(user => user.phone === phone), resDiv = document.getElementById('adminUserResult');
+            if(!u) { alert("User nahi mila!"); resDiv.style.display = 'none'; return; }
+            currentTargetUser = u; resDiv.style.display = 'block';
+            document.getElementById('auInfo').innerHTML = `<b>ID:</b> ${u.mwId} | <b>Bal:</b> ₹${u.balance.toFixed(2)}`;
+        }
+        function adminUpdateBal() { if(!currentTargetUser) return; currentTargetUser.balance = parseFloat(document.getElementById('auNewBal').value); localStorage.setItem('usersDB', JSON.stringify(usersDB)); alert("Balance updated!"); }
+        function adminUpdatePass() { if(!currentTargetUser) return; currentTargetUser.pass = document.getElementById('auNewPass').value.trim(); localStorage.setItem('usersDB', JSON.stringify(usersDB)); alert("Password updated!"); }
+        function adminToggleBlock() { if(!currentTargetUser) return; currentTargetUser.isBlocked = !currentTargetUser.isBlocked; localStorage.setItem('usersDB', JSON.stringify(usersDB)); alert("Status updated!"); }
+
+        function searchUserHistoryAdmin() {
+            let phone = document.getElementById('adminHistSearchPhone').value.trim();
+            let u = usersDB.find(user => user.phone === phone), resDiv = document.getElementById('adminFullHistoryResult');
+            if(!u) { resDiv.innerHTML = "User nahi mila!"; return; }
+            
+            let html = `<b>User: ${u.mwId} (${u.phone})</b><hr style="border-color:#3b3c4e; margin:4px 0;">`;
+            html += `<b>📍 Deposits:</b><br>`;
+            if(u.pendingDeposits && u.pendingDeposits.length > 0) {
+                u.pendingDeposits.forEach(d => { html += `• ₹${d.amount} | UTR: ${d.utr} | Time: ${d.time || 'N/A'} | <span style="color:${d.status==='Success'?'#43a047':'#ff9800'}">${d.status}</span><br>`; });
+            } else { html += `No deposits.<br>`; }
+            
+            html += `<hr style="border-color:#3b3c4e; margin:4px 0;"><b>📍 Withdrawals:</b><br>`;
+            if(u.pendingWithdrawals && u.pendingWithdrawals.length > 0) {
+                u.pendingWithdrawals.forEach(w => { html += `• ₹${w.amount} | ${w.holder}, ${w.bank} (Acc: ${w.acc}, IFSC: ${w.ifsc}) | Time: ${w.time || 'N/A'} | <span style="color:${w.status==='Success'?'#43a047':'#ff9800'}">${w.status}</span><br>`; });
+            } else { html += `No withdrawals.<br>`; }
+
+            html += `<hr style="border-color:#3b3c4e; margin:4px 0;"><b>📍 Bets (Win/Loss):</b><br>`;
+            if(u.myBets && u.myBets.length > 0) {
+                u.myBets.slice().reverse().forEach(b => {
+                    let stClr = b.status === 'Win' ? '#43a047' : (b.status === 'Loss' ? '#e53935' : '#ffc107');
+                    html += `• Period: ${b.period} | ${b.choice} | ₹${b.amount} | Time: ${b.time || 'N/A'} | <b style="color:${stClr}">${b.status}</b><br>`;
+                });
+            } else { html += `No bets.<br>`; }
+
+            resDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
